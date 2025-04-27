@@ -1,5 +1,5 @@
 {
-    "name": "yourusername/php-mvc-framework",
+    "name": "kita/bengkel",
     "description": "A clean and simple PHP MVC framework",
     "type": "project",
     "license": "MIT",
@@ -10,7 +10,7 @@
         }
     },
     "require": {
-        "php": ">=7.4",
+        "php": ">=8.4",
         "ext-pdo": "*",
         "ext-json": "*"
     }

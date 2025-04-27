@@ -12,6 +12,8 @@
     "require": {
         "php": ">=8.4",
         "ext-pdo": "*",
-        "ext-json": "*"
+        "ext-json": "*",
+        "doctrine/inflector": "^2.0",
+        "monolog/monolog": "^3.9"
     }
 }

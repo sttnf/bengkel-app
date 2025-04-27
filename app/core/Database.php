@@ -1,51 +1,45 @@
 <?php
+
 namespace App\Core;
 
-class Database {
+class Database
+{
     private static ?Database $instance = null;
-    private \PDO $connection;
+    public \PDO $connection;
 
-    private function __construct() {
-        $config = require_once __DIR__ . '/../../config/database.php';
-        
+    private function __construct()
+    {
+        $config = require __DIR__ . '/../../config/database.php';
+
         $dsn = "mysql:host={$config['host']};dbname={$config['name']};charset={$config['charset']}";
         $options = [
             \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
             \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
             \PDO::ATTR_EMULATE_PREPARES => false,
         ];
-        
-        try {
-            $this->connection = new \PDO($dsn, $config['user'], $config['pass'], $options);
-        } catch (\PDOException $e) {
-            throw new \Exception("Database connection failed: " . $e->getMessage());
-        }
+
+        $this->connection = new \PDO($dsn, $config['user'], $config['pass'], $options);
     }
-    
-    public static function getInstance(): ?Database
+
+    public static function getInstance(): Database
     {
-        if (self::$instance === null) {
-            self::$instance = new self();
-        }
-        return self::$instance;
+        return self::$instance ??= new self();
     }
-    
-    public function getConnection(): \PDO
+
+    public function query(string $sql, array $params = []): \PDOStatement
     {
-        return $this->connection;
-    }
-    
-    public function query($sql, $params = []) {
         $stmt = $this->connection->prepare($sql);
         $stmt->execute($params);
         return $stmt;
     }
-    
-    public function fetch($sql, $params = []) {
+
+    public function fetch(string $sql, array $params = []): array|false
+    {
         return $this->query($sql, $params)->fetch();
     }
-    
-    public function fetchAll($sql, $params = []) {
+
+    public function fetchAll(string $sql, array $params = []): array
+    {
         return $this->query($sql, $params)->fetchAll();
     }
 }

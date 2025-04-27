@@ -27,7 +27,7 @@ abstract class Model {
         $sql = "INSERT INTO {$this->table} ($fieldsStr) VALUES ($placeholdersStr)";
 
         $this->db->query($sql, array_values($data));
-        return $this->db->getConnection()->lastInsertId();
+        return $this->db->connection->lastInsertId();
     }
 
     public function update($id, $data) {

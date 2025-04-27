@@ -1,6 +1,6 @@
 <?php
 return [
-    'name' => 'PHP MVC Framework',
+    'name' => 'Bengkel Kita',
     'debug' => true,
     'url' => 'http://localhost',
     'timezone' => 'UTC',

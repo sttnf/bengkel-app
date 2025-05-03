@@ -15,7 +15,7 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-    command: php cmd.php serve -h 0.0.0.0 -p ${APP_PORT:-8000}
+    command: php cmd.php serve
     environment:
       - DB_CONNECTION=${DB_CONNECTION:-mysql}
       - DB_HOST=${DB_HOST:-mysql}
@@ -62,7 +62,7 @@ services:
       - "${MYSQL_PORT:-3306}:3306"
     command: --default-authentication-plugin=caching_sha2_password
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-root}"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-root}" ]
       interval: 5s
       timeout: 5s
       retries: 10

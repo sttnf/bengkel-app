@@ -163,8 +163,8 @@ function checkAutoloader()
 // Start development web server
 function startServer($options): void
 {
-    $host = $options['host'] ?? 'localhost';
-    $port = $options['port'] ?? '8000';
+    $host = $options['host'] ?? getenv('HOST') ?? 'localhost';
+    $port = $options['port'] ?? getenv('PORT') ?? 8000;
 
     // Check if the public directory exists
     if (!is_dir(BASE_PATH . '/public')) {

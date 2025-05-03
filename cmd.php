@@ -181,7 +181,7 @@ function startServer($options): void
         output("Migration step skipped due to --skip-migrate.php option", 'warning');
     }
 
-    output("Starting development server at http://{$host}:{$port}", 'info');
+    output("Starting server at http://{$host}:{$port}", 'info');
     output("Document root: " . BASE_PATH . "/public", 'info');
     output("Press Ctrl+C to stop the server", 'warning');
 

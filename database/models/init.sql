@@ -225,7 +225,7 @@ SELECT sr.request_id,
        s.name                                            AS service_name,
        sr.scheduled_date,
        sr.scheduled_time,
-       t.full_name                                       AS technician_name,
+       t.name                                       AS technician_name,
        sr.status,
        sr.actual_price,
        (SELECT SUM(sp.subtotal)

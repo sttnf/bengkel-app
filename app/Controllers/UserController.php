@@ -9,7 +9,7 @@ class UserController extends Controller {
 
     public function __construct() {
         $this->userModel = new User();
-    }
+    }   
 
     public function index() {
         $users = $this->userModel->findAll();

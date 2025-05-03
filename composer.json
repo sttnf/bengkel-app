@@ -14,6 +14,7 @@
         "ext-pdo": "*",
         "ext-json": "*",
         "doctrine/inflector": "^2.0",
-        "monolog/monolog": "^3.9"
+        "monolog/monolog": "^3.9",
+      "ext-fileinfo": "*"
     }
 }

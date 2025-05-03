@@ -1,3 +1,36 @@
+<?php
+
+// Only start the session if one hasn't been started already
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+// Function to check if a user is logged in (based on your session variable)
+function isLoggedIn(): bool
+{
+    return isset($_SESSION['user_id']); // Replace 'user_id' with your actual session key
+}
+
+// Function to generate the navigation links
+function generateNavLinks(): string
+{
+    $navLinks = '';
+
+    $navLinks .= '<a href="/#services" class="text-gray-500 hover:text-gray-900">Layanan</a>';
+    $navLinks .= '<a href="/#testimonials" class="text-gray-500 hover:text-gray-900">Testimoni</a>';
+    $navLinks .= '<a href="/#contact" class="text-gray-500 hover:text-gray-900">Kontak</a>';
+    $navLinks .= '<a class="border border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-600 hover:text-white transition-colors" href="/service" data-discover="true">Service</a>';
+
+    if (isLoggedIn()) {
+        $navLinks .= '<a class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors" href="/dashboard" data-discover="true">Dashboard</a>';
+    } else {
+        $navLinks .= '<a class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors" href="/login" data-discover="true">Login</a>';
+    }
+
+    return $navLinks;
+}
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -56,14 +89,9 @@
                     </svg>
                 </button>
             </div>
-            <div class="hidden sm:flex sm:items-center sm:space-x-4"><a href="/#services"
-                                                                        class="text-gray-500 hover:text-gray-900">Layanan</a><a
-                        href="/#testimonials" class="text-gray-500 hover:text-gray-900">Testimoni</a><a
-                        href="/#contact" class="text-gray-500 hover:text-gray-900">Kontak</a><a
-                        class="border border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-600 hover:text-white transition-colors"
-                        href="/service" data-discover="true">Service</a><a
-                        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                        href="/login" data-discover="true">Login</a></div>
+            <div class="hidden sm:flex sm:items-center sm:space-x-4">
+                <?php echo generateNavLinks(); ?>
+            </div>
         </div>
     </div>
 </nav>
@@ -128,8 +156,7 @@
         </div>
         <div class="mt-8 pt-8 border-t border-gray-700"><p class="text-center text-gray-400">©
                 <?= date('Y') ?>
-                Bengkel
-                Kita. All rights reserved.</p></div>
+                Bengkel Kita. All rights reserved.</p></div>
     </div>
 </footer>
 </body>

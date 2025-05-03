@@ -49,32 +49,28 @@ function extracted(string $folderPath, PDO $pdo): void
         throw new Exception("No SQL files found in {$folderPath}");
     }
 
-    // Start transaction
-    {
-        try {
-            $pdo->beginTransaction();
-
-            // Scan folder for SQL files
-            $files = glob($folderPath . '/*.sql');
-            if (!$files) {
-                throw new Exception("No SQL files found in {$folderPath}");
-            }
-
-            foreach ($files as $file) {
-                $sql = file_get_contents($file);
-                if ($sql === false) {
-                    throw new Exception("Failed to read file: {$file}");
-                }
-                $pdo->exec($sql);
-                echo "✅ Executed migration from: " . basename($file) . PHP_EOL;
-            }
-
-            $pdo->commit();
-            echo "🎉 Database migration completed successfully.";
-        } catch (Exception $e) {
-            echo "❌ Migration failed: " . $e->getMessage()."\n";
+    try {
+        // Scan folder for SQL files
+        $files = glob($folderPath . '/*.sql');
+        if (!$files) {
+            throw new Exception("No SQL files found in {$folderPath}");
         }
-    };
+
+        foreach ($files as $file) {
+            $sql = file_get_contents($file);
+
+            if ($sql === false) {
+                throw new Exception("Failed to read file: {$file}");
+            }
+
+            $pdo->exec($sql);
+            echo "✅ Executed migration from: " . basename($file) . PHP_EOL;
+        }
+
+        echo "🎉 Database migration completed successfully.";
+    } catch (Exception $e) {
+        echo "❌ Migration failed: " . $e->getMessage() . PHP_EOL;
+    }
 }
 
 // Display colorful messages
@@ -208,7 +204,7 @@ function checkAndCreateDirectories()
         '/config',
         '/database',
         '/database/migrations',
-        '/database/models',  // Add models directory for SQL files
+        '/database/Models',  // Add Models directory for SQL files
         '/public',
         '/public/css',
         '/public/js',
@@ -351,7 +347,7 @@ EOT;
 EOT;
 
     // Add an example SQL migration file with correct comment syntax
-    $essentialFiles['/database/models/init.sql'] = <<<'EOT'
+    $essentialFiles['/database/Models/init.sql'] = <<<'EOT'
 /* Create users table */
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -428,7 +424,7 @@ class %className% extends Model
 EOT;
             break;
         case 'migration':
-            $dir = '/database/models';
+            $dir = '/database/Models';
             // Use ordered prefix for migration file name
             $files = glob(BASE_PATH . $dir . '/*.sql');
             $nextOrder = count($files) + 1;

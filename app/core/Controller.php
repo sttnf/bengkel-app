@@ -1,18 +1,21 @@
 <?php
 namespace App\Core;
 
+use JetBrains\PhpStorm\NoReturn;
+
 abstract class Controller {
-    protected function render($view, $data = []) {
+    protected function render($view, $data = []): string
+    {
         $router = new Router();
         return $router->renderView($view, $data);
     }
 
-    protected function redirect($url) {
+    #[NoReturn] protected function redirect($url) {
         header("Location: $url");
         exit;
     }
 
-    protected function json($data) {
+    #[NoReturn] protected function json($data) {
         header('Content-Type: application/json');
         echo json_encode($data);
         exit;

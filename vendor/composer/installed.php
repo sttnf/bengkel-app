@@ -3,7 +3,7 @@
         'name' => 'kita/bengkel',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '5b16c260b7c037da108cc4013c01d91f1c22efbe',
+        'reference' => '48e4563f6ff1e911ad0223c29993ebdf171de1a7',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -22,7 +22,7 @@
         'kita/bengkel' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '5b16c260b7c037da108cc4013c01d91f1c22efbe',
+            'reference' => '48e4563f6ff1e911ad0223c29993ebdf171de1a7',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

@@ -2,7 +2,7 @@
 return [
     'name' => 'Bengkel Kita',
     'debug' => true,
-    'url' => 'http://localhost',
+    'url' => 'http://0.0.0.0',
     'timezone' => 'UTC',
     'locale' => 'en'
 ];

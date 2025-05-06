@@ -146,11 +146,16 @@ class Router
      * @param array $data An associative array of data to pass to the view.
      * @return string The rendered HTML content.
      */
-    public function renderView(string $view, array $data = []): string
+    public function renderView(string $view, array $data = [], string $layout = 'main'): string
     {
         extract($data);
-        $layoutContent = $this->layoutContent();
+        $layoutContent = $this->layoutContent($layout);
         $viewContent = $this->viewContent($view, $data);
+
+        if ($viewContent === false) {
+            throw new Exception("View not found: " . htmlspecialchars($view));
+        }
+
 
         return str_replace('{{content}}', $viewContent, $layoutContent);
     }
@@ -160,10 +165,10 @@ class Router
      *
      * @return string The layout content.
      */
-    protected function layoutContent(): string
+    protected function layoutContent(string $layout = 'main'): string
     {
         ob_start();
-        include_once __DIR__ . '/../Views/layouts/main.php';
+        include_once __DIR__ . "/../Views/layouts/$layout.php";
         return ob_get_clean();
     }
 

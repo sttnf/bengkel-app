@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Core;
-
 class Database
 {
     private static ?Database $instance = null;
@@ -9,34 +8,41 @@ class Database
 
     private function __construct()
     {
-        $host = $_ENV['DB_HOST'] ?? 'localhost';
-        $name = $_ENV['DB_NAME'] ?? '';
-        $user = $_ENV['DB_USER'] ?? '';
-        $pass = $_ENV['DB_PASSWORD'] ?? '';
-        $port = $_ENV['DB_PORT'] ?? '3306';
+        $dsn = sprintf(
+            "mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4",
+            $_ENV['DB_HOST'] ?? 'localhost',
+            $_ENV['DB_PORT'] ?? '3306',
+            $_ENV['DB_NAME'] ?? 'db_service_system'
+        );
 
-        $dsn = "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4";
         $options = [
             \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
             \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
             \PDO::ATTR_EMULATE_PREPARES => false,
             \PDO::ATTR_TIMEOUT => 5,
-            \PDO::ATTR_PERSISTENT => false, // Non-persistent connections may help
+            \PDO::ATTR_PERSISTENT => false,
         ];
 
-        try {
-            // Correct parameter order: dsn, username, password, options
-            $this->connection = new \PDO($dsn, $user, $pass, $options);
-        } catch (\PDOException $e) {
-            // Provide a detailed error message with troubleshooting steps
-            $message = "Database connection failed: " . $e->getMessage() .
-                "\n\nTroubleshooting steps:" .
-                "\n1. Check if your database server is running at {$host}:{$port}" .
-                "\n2. Verify your database credentials are correct" .
-                "\n3. Ensure no firewall is blocking the connection" .
-                "\n4. Confirm the database '{$name}' exists";
 
-            throw new \PDOException($message, (int)$e->getCode(), $e);
+        echo $dsn;
+
+        try {
+            $this->connection = new \PDO(
+                $dsn,
+                $_ENV['DB_USER'] ?? 'root',
+                $_ENV['DB_PASSWORD'] ?? '',
+                $options
+            );
+        } catch (\PDOException $e) {
+            throw new \PDOException(
+                "Database connection failed: {$e->getMessage()}\n" .
+                "1. Check if your database server is running.\n" .
+                "2. Verify your credentials.\n" .
+                "3. Ensure no firewall is blocking the connection.\n" .
+                "4. Confirm the database exists.",
+                (int)$e->getCode(),
+                $e
+            );
         }
     }
 

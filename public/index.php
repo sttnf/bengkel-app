@@ -39,4 +39,24 @@ $router->get('/users/:id/edit', [UserController::class, 'edit']);
 $router->post('/users/:id', [UserController::class, 'update']);
 $router->post('/users/:id/delete', [UserController::class, 'delete']);
 
+// Dashboard route
+$router->get('/dashboard', function () use ($router) {
+//    if (!isset($_SESSION['user_id'])) {
+//        header('Location: /login');
+//        exit();
+//    }
+
+    return $router->renderView(
+        'dashboard/index',
+        [
+            'lowStockItems' => [
+                ['name' => 'Item 1', 'current_stock' => 5, 'reorder_level' => 10, 'id' => 1],
+                ['name' => 'Item 2', 'current_stock' => 3, 'reorder_level' => 5, 'id' => 2],
+                ['name' => 'Item 3', 'current_stock' => 8, 'reorder_level' => 15, 'id' => 3],
+            ],
+        ],
+        'dashboard'
+    );
+});
+
 echo $router->resolve();

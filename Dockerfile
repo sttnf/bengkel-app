@@ -1,23 +1,22 @@
-FROM php:8.4-fpm-alpine
+FROM dunglas/frankenphp
 
-WORKDIR /var/www/html
+WORKDIR /app
 
-# Install necessary packages including Nginx
-RUN apk update && apk add --no-cache nginx php82-fpm php82-pdo_mysql php82-mbstring
+# Copy composer files and install dependencies
+COPY composer.json composer.lock ./
+COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
+RUN install-php-extensions pdo_mysql gd intl zip opcache \
+    && composer install --no-dev --optimize-autoloader
 
-# Copy your PHP application
-COPY . /var/www/html
+# Copy application files and set permissions
+COPY . .
+RUN chown -R www-data:www-data /app && chmod -R 755 /app
 
-# Copy Nginx configuration
-COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
+# Configure PHP settings
+ENV PHP_MEMORY_LIMIT=256M \
+    PHP_UPLOAD_MAX_FILESIZE=20M \
+    PHP_POST_MAX_SIZE=20M
 
-# Expose port 80 for Nginx
-EXPOSE 80
-
-# Install and configure Supervisor
-RUN apk add --no-cache supervisor
-# Create the log directory for Supervisor
-RUN mkdir -p /var/log/supervisor
-COPY docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Expose port and start the application
+EXPOSE 8000
+CMD ["php", "cmd.php", "serve", "--host=0.0.0.0", "--skip-migrate"]

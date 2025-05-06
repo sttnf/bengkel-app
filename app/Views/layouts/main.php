@@ -33,38 +33,13 @@ function generateNavLinks(): string
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bengkel Kita - Perbaikan Kendaraan Terbaik</title>
-    <link rel="canonical" href="https://bengkel.kita.blue">
-    <link rel="icon" href="https://cdn.kita.blue/kita/logo.png">
-    <meta name="description" content="Bengkel Kita adalah tempat perbaikan kendaraan terbaik di Indonesia">
-    <meta property="og:title" content="Bengkel Kita - Perbaikan Kendaraan Terbaik">
-    <meta property="og:description" content="Bengkel Kita adalah tempat perbaikan kendaraan terbaik di Indonesia">
-    <meta property="og:image" content="https://cdn.kita.blue/kita/thumbnail.png">
-    <meta property="og:type" content="website">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Bengkel Kita - Perbaikan Kendaraan Terbaik">
-    <meta name="twitter:description" content="Bengkel Kita adalah tempat perbaikan kendaraan terbaik di Indonesia">
-    <meta name="twitter:image" content="https://cdn.kita.blue/kita/thumbnail.png">
-    <link rel="canonical" href="https://bengkel.kita.blue" data-rh="true">
-    <link rel="icon" href="https://cdn.kita.blue/kita/logo.png" data-rh="true">
-    <meta name="description" content="Bengkel Kita adalah tempat perbaikan kendaraan terbaik di Indonesia"
-          data-rh="true">
-    <meta property="og:title" content="Bengkel Kita - Perbaikan Kendaraan Terbaik" data-rh="true">
-    <meta property="og:description" content="Bengkel Kita adalah tempat perbaikan kendaraan terbaik di Indonesia"
-          data-rh="true">
-    <meta property="og:image" content="https://cdn.kita.blue/kita/thumbnail.png" data-rh="true">
-    <meta property="og:type" content="website" data-rh="true">
-    <meta name="twitter:card" content="summary_large_image" data-rh="true">
-    <meta name="twitter:title" content="Bengkel Kita - Perbaikan Kendaraan Terbaik" data-rh="true">
-    <meta name="twitter:description" content="Bengkel Kita adalah tempat perbaikan kendaraan terbaik di Indonesia"
-          data-rh="true">
-    <meta name="twitter:image" content="https://cdn.kita.blue/kita/thumbnail.png" data-rh="true">
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
+
+<?php
+$pageTitle = $pageTitle ?? 'Bengkel Kita - Perbaikan Kendaraan Terbaik';
+
+include_once __DIR__ . '/../../Components/head.php';
+?>
+
 <body class="bg-gray-100 min-h-screen">
 <nav class="sticky top-0 w-full bg-white shadow-sm z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -96,7 +71,7 @@ function generateNavLinks(): string
     </div>
 </nav>
 
-<main class=" min-h-screen">
+<main class="min-h-screen">
     {{content}}
 </main>
 

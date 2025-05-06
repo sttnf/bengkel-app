@@ -10,7 +10,6 @@ use Symfony\Component\Process\Process;
 // Require Composer's autoloader
 require_once __DIR__ . '/vendor/autoload.php';
 
-
 /**
  * PHP MVC Framework Server Manager
  *
@@ -173,6 +172,8 @@ function startServer(array $options): void
 
     // Use Symfony Process for better control
     $process = new Process(['php', '-S', "{$host}:{$port}", '-t', $docRoot]);
+    $process->setTimeout(null);
+    $process->setIdleTimeout(null);
     $process->setTty(false);
     $process->run(function ($type, $buffer) {
         // Stream output to the console
@@ -184,6 +185,7 @@ function startServer(array $options): void
         exit(1);
     }
 }
+
 /**
  * Generates a framework component (controller, model, migration).
  *

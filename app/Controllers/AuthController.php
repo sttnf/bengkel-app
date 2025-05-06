@@ -11,7 +11,6 @@ class AuthController extends Controller
 
     public function register()
     {
-        session_start();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             return $this->render('auth/register');
@@ -45,8 +44,6 @@ class AuthController extends Controller
 
     public function login()
     {
-        session_start();
-
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             return $this->render('auth/login');
         }
@@ -70,7 +67,6 @@ class AuthController extends Controller
                 $this->saveSessionToCookie($user['id']);
             }
 
-            echo $_POST;
 
             $_SESSION["registration_success"] = 'Login successful! Welcome back, ' . $user['name'] . '.';
             header('Location: /dashboard');
@@ -83,7 +79,6 @@ class AuthController extends Controller
 
     public function logout()
     {
-        session_start();
         $this->clearSessionCookie();
         session_destroy();
         header('Location: /login');
@@ -109,7 +104,6 @@ class AuthController extends Controller
 
     public function checkRememberMe(): void
     {
-        session_start();
         if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_user_id'])) {
             $userId = $_COOKIE['remember_user_id'];
             $userModel = new User();

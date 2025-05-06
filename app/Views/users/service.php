@@ -1,6 +1,4 @@
 <?php
-session_start();
-
 // Initialize form data if not set
 $_SESSION['form_data'] = $_SESSION['form_data'] ?? [
     'service_type' => '',

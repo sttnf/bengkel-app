@@ -1,81 +1,128 @@
 <?php
-// Initialize form data if not set
-$_SESSION['form_data'] = $_SESSION['form_data'] ?? [
-    'service_type' => '',
-    'service_price' => '',
-    'service_duration' => '',
-    'date' => '',
-    'time' => '',
-    'vehicle_brand' => '',
-    'vehicle_model' => '',
-    'vehicle_year' => '',
-    'plate_number' => '',
-    'notes' => ''
-];
-
-// Service options data
-$services = [
-    ['name' => 'Tune Up Mesin', 'description' => 'Perawatan rutin untuk performa optimal mesin kendaraan Anda', 'duration' => '2 jam', 'price' => 'Rp 500.000'],
-    ['name' => 'Servis Rem', 'description' => 'Pemeriksaan dan perbaikan sistem pengereman untuk keamanan berkendara', 'duration' => '1.5 jam', 'price' => 'Rp 300.000'],
-    ['name' => 'Servis AC', 'description' => 'Perawatan sistem pendingin untuk kenyamanan berkendara', 'duration' => '2 jam', 'price' => 'Rp 400.000'],
-    ['name' => 'Ganti Oli', 'description' => 'Penggantian oli mesin berkualitas untuk performa optimal', 'duration' => '1 jam', 'price' => 'Rp 250.000']
-];
-
-// Time slots available
-$time_slots = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00'];
-
-// Handle final form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_booking'])) {
-    // In a real application, you would save the data to a database here
-    // Process all form data at once
+// Initialize form data once if not set
+if (!isset($_SESSION['form_data'])) {
     $_SESSION['form_data'] = [
-        'service_type' => $_POST['service_type'] ?? '',
-        'service_price' => $_POST['service_price'] ?? '',
-        'service_duration' => $_POST['service_duration'] ?? '',
-        'date' => $_POST['date'] ?? '',
-        'time' => $_POST['time'] ?? '',
-        'vehicle_brand' => $_POST['vehicle_brand'] ?? '',
-        'vehicle_model' => $_POST['vehicle_model'] ?? '',
-        'vehicle_year' => $_POST['vehicle_year'] ?? '',
-        'plate_number' => $_POST['plate_number'] ?? '',
-        'notes' => $_POST['notes'] ?? ''
+        'service_type' => '',
+        'service_id' => '',
+        'service_price' => '',
+        'service_duration' => '',
+        'date' => '',
+        'time' => '',
+        'vehicle_brand' => '',
+        'vehicle_model' => '',
+        'vehicle_year' => '',
+        'plate_number' => '',
+        'notes' => ''
     ];
-
-    echo "<script>console.log(" . json_encode($_SESSION['form_data']) . ");</script>";
-
-    exit;
 }
 
-// For pre-filling form fields
+// Get services from database and prepare for view
+$serviceModel = new \App\Models\Service();
+$services = array_map(function ($service) {
+    return [
+        'id' => $service['id'],
+        'name' => $service['name'],
+        'description' => $service['description'],
+        'duration' => number_format($service['estimated_hours'] ?? 0, 0, ',', '.') . ' jam',
+        'price' => 'Rp ' . number_format($service['base_price'] ?? 0, 0, ',', '.'),
+    ];
+}, $serviceModel->getAllActive());
+
+// Get user ID and initialize service request model
+$userId = $_SESSION['user_id'] ?? null;
+
+$serviceRequestModel = new \App\Models\ServiceRequest();
+
+// Get date and service selection from session or form
+$selectedDate = $_SESSION['form_data']['date'] = $_POST['date'] ?? $_SESSION['form_data']['date'] ?? date('Y-m-d');
+$selectedServiceId = $_SESSION['form_data']['service_id'] = $_POST['service_id'] ?? $_SESSION['form_data']['service_id'] ?? null;
+
+// Get available time slots based on service and date selection
+$availableTimeSlots = $selectedServiceId ?
+    $serviceRequestModel->getAvailableServiceTimes($selectedServiceId, $selectedDate) : [];
+
+// Process form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_booking'])) {
+    // Get service details
+
+    $serviceData = $serviceModel->findById($_POST['service_id']);
+
+    if ($serviceData) {
+        // Store form data in session
+        $_SESSION['form_data'] = [
+            'service_id' => $_POST['service_id'] ?? '',
+            'service_type' => $_POST['service_type'] ?? '',
+            'service_price' => $serviceData['base_price'] ?? 0,
+            'service_duration' => $serviceData['estimated_hours'] ?? 0,
+            'date' => $_POST['date'] ?? '',
+            'time' => $_POST['time'] ?? '',
+            'vehicle_brand' => $_POST['vehicle_brand'] ?? '',
+            'vehicle_model' => $_POST['vehicle_model'] ?? '',
+            'vehicle_year' => $_POST['vehicle_year'] ?? '',
+            'plate_number' => $_POST['plate_number'] ?? '',
+            'notes' => $_POST['notes'] ?? ''
+        ];
+
+        // Create service request if user is logged in
+        if ($userId) {
+            $requestData = [
+                'user_id' => $userId,
+                'service_id' => $_POST['service_id'],
+                'vehicle_brand' => $_POST['vehicle_brand'],
+                'vehicle_model' => $_POST['vehicle_model'],
+                'vehicle_year' => $_POST['vehicle_year'],
+                'plate_number' => $_POST['plate_number'],
+                'notes' => $_POST['notes'],
+                'scheduled_date' => $_POST['date'],
+                'scheduled_time' => $_POST['time'],
+                'estimated_price' => $serviceData['base_price'],
+                'status' => 'pending',
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+
+            $requestId = $serviceRequestModel->create($requestData);
+
+            if ($requestId) {
+                $_SESSION['last_request_id'] = $requestId;
+                $_SESSION['form_data'] = []; // Clear form data
+                header("Location: /booking-confirmation");
+                exit();
+            } else {
+                $errorMessage = "Terjadi kesalahan saat menyimpan data. Silakan coba lagi.";
+            }
+        } else {
+            $errorMessage = "Anda harus login untuk melakukan pemesanan.";
+        }
+    } else {
+        $errorMessage = "Layanan tidak ditemukan. Silakan pilih layanan yang valid.";
+    }
+}
+
 $formData = $_SESSION['form_data'];
 ?>
 
-<div class="max-w-3xl mx-auto py-12">
+<div class="max-w-3xl mx-auto py-12 px-4">
     <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-gray-900">Pesan Servis</h1>
         <p class="mt-2 text-gray-600">Isi formulir di bawah untuk memesan layanan servis</p>
     </div>
 
-    <!-- Progress Steps -->
+    <?php if (isset($errorMessage)): ?>
+        <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <span class="block sm:inline"><?= $errorMessage ?></span>
+        </div>
+    <?php endif; ?>
+
     <div class="mb-8">
         <div class="flex items-center justify-between relative">
             <div class="absolute left-0 right-0 top-1/2 transform -translate-y-1/2 h-0.5 bg-gray-200"></div>
-            <div class="relative flex items-center justify-center w-10 h-10 rounded-full bg-blue-600 text-white"
-                 id="step-indicator-1">
-                <span class="text-sm font-medium">1</span>
-            </div>
-            <div class="relative flex items-center justify-center w-10 h-10 rounded-full bg-white text-gray-400 border-2 border-gray-200"
-                 id="step-indicator-2">
-                <span class="text-sm font-medium">2</span>
-            </div>
-            <div class="relative flex items-center justify-center w-10 h-10 rounded-full bg-white text-gray-400 border-2 border-gray-200"
-                 id="step-indicator-3">
-                <span class="text-sm font-medium">3</span>
-            </div>
-            <div class="relative flex items-center justify-center w-10 h-10 rounded-full bg-white text-gray-400 border-2 border-gray-200"
-                 id="step-indicator-4">
-                <span class="text-sm font-medium">4</span>
-            </div>
+            <?php for ($i = 1; $i <= 4; $i++): ?>
+                <div class="relative flex items-center justify-center w-10 h-10 rounded-full
+                    <?= $i === 1 ? 'bg-blue-600 text-white' : 'bg-white text-gray-400 border-2 border-gray-200' ?>"
+                     id="step-indicator-<?= $i ?>">
+                    <span class="text-sm font-medium"><?= $i ?></span>
+                </div>
+            <?php endfor; ?>
         </div>
         <div class="flex justify-between mt-2">
             <span class="text-sm text-gray-500">Pilih Layanan</span>
@@ -94,22 +141,22 @@ $formData = $_SESSION['form_data'];
                     <div class="grid gap-4">
                         <?php foreach ($services as $service): ?>
                             <?php
-                            $duration_value = trim(str_replace('jam', '', $service['duration']));
-                            $price_value = trim(str_replace('Rp ', '', $service['price']));
+                            $duration_value = (float)str_replace(' jam', '', $service['duration']);
+                            $price_value = (int)str_replace(['Rp ', '.'], '', $service['price']);
                             $is_selected = $formData['service_type'] == $service['name'];
                             ?>
                             <label class="service-option p-4 border rounded-lg cursor-pointer transition-all
-                                    <?= $is_selected ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-blue-200' ?>">
+                                <?= $is_selected ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-blue-200' ?>">
                                 <div class="flex items-start justify-between">
                                     <div>
                                         <h3 class="font-medium text-gray-900"><?= $service['name'] ?></h3>
                                         <p class="mt-1 text-sm text-gray-500"><?= $service['description'] ?></p>
                                         <div class="mt-2 flex items-center space-x-4">
                                             <span class="text-sm text-gray-600">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                <svg class="lucide lucide-clock inline-block h-4 w-4 mr-1"
+                                                     xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                                      viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                     class="lucide lucide-clock inline-block h-4 w-4 mr-1">
+                                                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                     <circle cx="12" cy="12" r="10"></circle>
                                                     <polyline points="12 6 12 12 16 14"></polyline>
                                                 </svg>
@@ -120,6 +167,7 @@ $formData = $_SESSION['form_data'];
                                     </div>
                                     <div class="flex items-center h-5">
                                         <input type="radio" name="service_type" value="<?= $service['name'] ?>"
+                                               data-id="<?= $service['id'] ?>"
                                                data-price="<?= $price_value ?>"
                                                data-duration="<?= $duration_value ?>" <?= $is_selected ? 'checked' : '' ?>
                                                class="w-5 h-5 text-blue-600 rounded-full border-gray-300">
@@ -134,9 +182,9 @@ $formData = $_SESSION['form_data'];
                             class="next-step px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                             disabled>
                         Lanjut
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                             class="lucide lucide-chevron-right h-5 w-5 ml-2">
+                        <svg class="lucide lucide-chevron-right h-5 w-5 ml-2" xmlns="http://www.w3.org/2000/svg"
+                             width="24" height="24" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="m9 18 6-6-6-6"></path>
                         </svg>
                     </button>
@@ -159,16 +207,25 @@ $formData = $_SESSION['form_data'];
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Waktu Servis</label>
-                            <div class="grid grid-cols-3 gap-4">
-                                <?php foreach ($time_slots as $time): ?>
-                                    <?php $is_selected = $formData['time'] == $time; ?>
-                                    <label class="time-slot px-4 py-3 border rounded-lg flex items-center justify-center cursor-pointer <?= $is_selected ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-blue-200' ?>">
-                                        <input type="radio" name="time"
-                                               value="<?= $time ?>" <?= $is_selected ? 'checked' : '' ?>
-                                               class="sr-only">
-                                        <span><?= $time ?></span>
-                                    </label>
-                                <?php endforeach; ?>
+                            <div class="grid grid-cols-3 gap-4" id="time-slots-container">
+                                <?php if (!empty($availableTimeSlots)): ?>
+                                    <?php foreach ($availableTimeSlots as $slot): ?>
+                                        <?php
+                                        $time = date('H:i', strtotime($slot['time']));
+                                        $is_selected = $formData['time'] == $slot['time'];
+                                        ?>
+                                        <label class="time-slot px-4 py-3 border rounded-lg flex items-center justify-center cursor-pointer
+                                            <?= $is_selected ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-blue-200' ?>">
+                                            <input type="radio" name="time"
+                                                   value="<?= $slot['time'] ?>" <?= $is_selected ? 'checked' : '' ?>
+                                                   class="sr-only">
+                                            <span><?= $time ?></span>
+                                        </label>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <p class="col-span-3 text-gray-500">Silakan pilih layanan dan tanggal terlebih
+                                        dahulu untuk melihat waktu yang tersedia.</p>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -176,9 +233,9 @@ $formData = $_SESSION['form_data'];
                 <div class="mt-8 flex justify-between">
                     <button type="button"
                             class="prev-step flex items-center px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                             class="lucide lucide-chevron-left h-5 w-5 mr-2">
+                        <svg class="lucide lucide-chevron-left h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg"
+                             width="24" height="24" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="m15 18-6-6 6-6"></path>
                         </svg>
                         Kembali
@@ -186,9 +243,9 @@ $formData = $_SESSION['form_data'];
                     <button type="button"
                             class="next-step flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
                         Lanjut
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                             class="lucide lucide-chevron-right h-5 w-5 ml-2">
+                        <svg class="lucide lucide-chevron-right h-5 w-5 ml-2" xmlns="http://www.w3.org/2000/svg"
+                             width="24" height="24" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="m9 18 6-6-6-6"></path>
                         </svg>
                     </button>
@@ -200,44 +257,26 @@ $formData = $_SESSION['form_data'];
                 <div class="space-y-6">
                     <h2 class="text-xl font-semibold">Informasi Kendaraan</h2>
                     <div class="space-y-4">
-                        <div>
-                            <label for="vehicle_brand" class="block text-sm font-medium text-gray-700 mb-2">Merek
-                                Kendaraan</label>
-                            <input type="text" id="vehicle_brand" name="vehicle_brand"
-                                   value="<?= htmlspecialchars($formData['vehicle_brand']) ?>"
-                                   placeholder="Contoh: Toyota"
-                                   class="block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                                   required>
-                        </div>
+                        <?php
+                        $vehicleFields = [
+                            ['id' => 'vehicle_brand', 'label' => 'Merek Kendaraan', 'placeholder' => 'Contoh: Toyota'],
+                            ['id' => 'vehicle_model', 'label' => 'Model Kendaraan', 'placeholder' => 'Contoh: Avanza'],
+                            ['id' => 'vehicle_year', 'label' => 'Tahun Kendaraan', 'placeholder' => 'Contoh: 2020'],
+                            ['id' => 'plate_number', 'label' => 'Nomor Plat', 'placeholder' => 'Contoh: B 1234 CD'],
+                        ];
 
-                        <div>
-                            <label for="vehicle_model" class="block text-sm font-medium text-gray-700 mb-2">Model
-                                Kendaraan</label>
-                            <input type="text" id="vehicle_model" name="vehicle_model"
-                                   value="<?= htmlspecialchars($formData['vehicle_model']) ?>"
-                                   placeholder="Contoh: Avanza"
-                                   class="block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                                   required>
-                        </div>
-
-                        <div>
-                            <label for="vehicle_year" class="block text-sm font-medium text-gray-700 mb-2">Tahun
-                                Kendaraan</label>
-                            <input type="text" id="vehicle_year" name="vehicle_year"
-                                   value="<?= htmlspecialchars($formData['vehicle_year']) ?>" placeholder="Contoh: 2020"
-                                   class="block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                                   required>
-                        </div>
-
-                        <div>
-                            <label for="plate_number" class="block text-sm font-medium text-gray-700 mb-2">Nomor
-                                Plat</label>
-                            <input type="text" id="plate_number" name="plate_number"
-                                   value="<?= htmlspecialchars($formData['plate_number']) ?>"
-                                   placeholder="Contoh: B 1234 CD"
-                                   class="block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                                   required>
-                        </div>
+                        foreach ($vehicleFields as $field): ?>
+                            <div>
+                                <label for="<?= $field['id'] ?>" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <?= $field['label'] ?>
+                                </label>
+                                <input type="text" id="<?= $field['id'] ?>" name="<?= $field['id'] ?>"
+                                       value="<?= htmlspecialchars($formData[$field['id']]) ?>"
+                                       placeholder="<?= $field['placeholder'] ?>"
+                                       class="block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                       required>
+                            </div>
+                        <?php endforeach; ?>
 
                         <div>
                             <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">Catatan
@@ -252,9 +291,9 @@ $formData = $_SESSION['form_data'];
                 <div class="mt-8 flex justify-between">
                     <button type="button"
                             class="prev-step flex items-center px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                             class="lucide lucide-chevron-left h-5 w-5 mr-2">
+                        <svg class="lucide lucide-chevron-left h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg"
+                             width="24" height="24" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="m15 18-6-6 6-6"></path>
                         </svg>
                         Kembali
@@ -262,9 +301,9 @@ $formData = $_SESSION['form_data'];
                     <button type="button"
                             class="next-step flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                         Lanjut
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                             class="lucide lucide-chevron-right h-5 w-5 ml-2">
+                        <svg class="lucide lucide-chevron-right h-5 w-5 ml-2" xmlns="http://www.w3.org/2000/svg"
+                             width="24" height="24" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="m9 18 6-6-6-6"></path>
                         </svg>
                     </button>
@@ -276,72 +315,70 @@ $formData = $_SESSION['form_data'];
                 <div class="space-y-6">
                     <h2 class="text-xl font-semibold">Konfirmasi Pesanan</h2>
 
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <h3 class="font-medium text-gray-900 mb-3">Detail Layanan</h3>
-                        <div class="space-y-2">
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Layanan:</span>
-                                <span class="font-medium" id="summary-service">-</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Harga:</span>
-                                <span class="font-medium" id="summary-price">-</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Estimasi Waktu:</span>
-                                <span class="font-medium" id="summary-duration">-</span>
-                            </div>
-                        </div>
-                    </div>
+                    <?php
+                    $summaryBlocks = [
+                        [
+                            'title' => 'Detail Layanan',
+                            'fields' => [
+                                ['label' => 'Layanan', 'id' => 'summary-service'],
+                                ['label' => 'Harga', 'id' => 'summary-price'],
+                                ['label' => 'Estimasi Waktu', 'id' => 'summary-duration']
+                            ]
+                        ],
+                        [
+                            'title' => 'Jadwal',
+                            'fields' => [
+                                ['label' => 'Tanggal', 'id' => 'summary-date'],
+                                ['label' => 'Waktu', 'id' => 'summary-time']
+                            ]
+                        ],
+                        [
+                            'title' => 'Kendaraan',
+                            'fields' => [
+                                ['label' => 'Kendaraan', 'id' => 'summary-vehicle'],
+                                ['label' => 'Nomor Plat', 'id' => 'summary-plate']
+                            ],
+                            'notes' => true
+                        ]
+                    ];
 
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <h3 class="font-medium text-gray-900 mb-3">Jadwal</h3>
-                        <div class="space-y-2">
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Tanggal:</span>
-                                <span class="font-medium" id="summary-date">-</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Waktu:</span>
-                                <span class="font-medium" id="summary-time">-</span>
-                            </div>
-                        </div>
-                    </div>
+                    foreach ($summaryBlocks as $block): ?>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="font-medium text-gray-900 mb-3"><?= $block['title'] ?></h3>
+                            <div class="space-y-2">
+                                <?php foreach ($block['fields'] as $field): ?>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600"><?= $field['label'] ?>:</span>
+                                        <span class="font-medium" id="<?= $field['id'] ?>">-</span>
+                                    </div>
+                                <?php endforeach; ?>
 
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <h3 class="font-medium text-gray-900 mb-3">Kendaraan</h3>
-                        <div class="space-y-2">
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Kendaraan:</span>
-                                <span class="font-medium" id="summary-vehicle">-</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Nomor Plat:</span>
-                                <span class="font-medium" id="summary-plate">-</span>
-                            </div>
-                            <div class="pt-2 notes-container hidden">
-                                <span class="text-gray-600 block mb-1">Catatan:</span>
-                                <p class="text-gray-700 bg-white p-2 rounded border border-gray-200"
-                                   id="summary-notes"></p>
+                                <?php if (isset($block['notes']) && $block['notes']): ?>
+                                    <div class="pt-2 notes-container hidden">
+                                        <span class="text-gray-600 block mb-1">Catatan:</span>
+                                        <p class="text-gray-700 bg-white p-2 rounded border border-gray-200"
+                                           id="summary-notes"></p>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
-                    </div>
+                    <?php endforeach; ?>
                 </div>
                 <div class="mt-8 flex justify-between">
                     <button type="button"
                             class="prev-step flex items-center px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                             class="lucide lucide-chevron-left h-5 w-5 mr-2">
+                        <svg class="lucide lucide-chevron-left h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg"
+                             width="24" height="24" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="m15 18-6-6 6-6"></path>
                         </svg>
                         Kembali
                     </button>
                     <button type="submit" name="submit_booking"
                             class="flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                             class="lucide lucide-check h-5 w-5 mr-2">
+                        <svg class="lucide lucide-check h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" width="24"
+                             height="24" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
                         Pesan Sekarang
@@ -349,142 +386,104 @@ $formData = $_SESSION['form_data'];
                 </div>
             </div>
 
-            <!-- Hidden fields for storing data -->
+            <!-- Hidden fields -->
+            <input type="hidden" name="service_id" id="service_id"
+                   value="<?= htmlspecialchars((string)$formData['service_id']) ?>">
             <input type="hidden" name="service_price" id="service_price"
-                   value="<?= htmlspecialchars($formData['service_price']) ?>">
+                   value="<?= htmlspecialchars((string)$formData['service_price']) ?>">
             <input type="hidden" name="service_duration" id="service_duration"
-                   value="<?= htmlspecialchars($formData['service_duration']) ?>">
+                   value="<?= htmlspecialchars((string)$formData['service_duration']) ?>">
         </form>
     </div>
 </div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Current step tracker
         let currentStep = 1;
 
-        // All step elements
         const steps = document.querySelectorAll('.step-content');
         const stepIndicators = document.querySelectorAll('[id^="step-indicator-"]');
-
-        // Navigation buttons
         const nextButtons = document.querySelectorAll('.next-step');
         const prevButtons = document.querySelectorAll('.prev-step');
-
-        // Form elements
         const serviceOptions = document.querySelectorAll('input[name="service_type"]');
-        const timeSlots = document.querySelectorAll('input[name="time"]');
         const dateInput = document.getElementById('date');
-
-        // Hidden fields
+        const serviceIdInput = document.getElementById('service_id');
         const servicePriceInput = document.getElementById('service_price');
         const serviceDurationInput = document.getElementById('service_duration');
 
-        // Summary elements
-        const summaryService = document.getElementById('summary-service');
-        const summaryPrice = document.getElementById('summary-price');
-        const summaryDuration = document.getElementById('summary-duration');
-        const summaryDate = document.getElementById('summary-date');
-        const summaryTime = document.getElementById('summary-time');
-        const summaryVehicle = document.getElementById('summary-vehicle');
-        const summaryPlate = document.getElementById('summary-plate');
-        const summaryNotes = document.getElementById('summary-notes');
+        const summaryElements = {
+            service: document.getElementById('summary-service'),
+            price: document.getElementById('summary-price'),
+            duration: document.getElementById('summary-duration'),
+            date: document.getElementById('summary-date'),
+            time: document.getElementById('summary-time'),
+            vehicle: document.getElementById('summary-vehicle'),
+            plate: document.getElementById('summary-plate'),
+            notes: document.getElementById('summary-notes')
+        };
         const notesContainer = document.querySelector('.notes-container');
 
-        // Form navigation
         function goToStep(step) {
-            // Hide all steps
             steps.forEach(s => s.classList.add('hidden'));
-
-            // Reset all step indicators
             stepIndicators.forEach((indicator, idx) => {
-                if (idx + 1 < step) {
-                    // Completed steps
-                    indicator.classList.add('bg-blue-600', 'text-white');
-                    indicator.classList.remove('bg-white', 'text-gray-400', 'border-2', 'border-gray-200');
-                } else if (idx + 1 === step) {
-                    // Current step
-                    indicator.classList.add('bg-blue-600', 'text-white');
-                    indicator.classList.remove('bg-white', 'text-gray-400', 'border-2', 'border-gray-200');
-                } else {
-                    // Future steps
-                    indicator.classList.remove('bg-blue-600', 'text-white');
-                    indicator.classList.add('bg-white', 'text-gray-400', 'border-2', 'border-gray-200');
-                }
-            });
+                const isCompleted = idx + 1 < step;
+                const isCurrent = idx + 1 === step;
 
-            // Show the current step
+                indicator.className = "relative flex items-center justify-center w-10 h-10 rounded-full " +
+                    (isCompleted || isCurrent ?
+                        "bg-blue-600 text-white" :
+                        "bg-white text-gray-400 border-2 border-gray-200");
+            });
             document.getElementById(`step-${step}`).classList.remove('hidden');
             currentStep = step;
 
-            // If on the final step, update summary
-            if (step === 4) {
-                updateSummary();
-            }
+            if (step === 4) updateSummary();
         }
 
-        // Event listeners for navigation buttons
-        nextButtons.forEach(button => {
-            button.addEventListener('click', function () {
-                // Validate current step before proceeding
-                if (validateStep(currentStep)) {
-                    goToStep(currentStep + 1);
-                }
-            });
-        });
-
-        prevButtons.forEach(button => {
-            button.addEventListener('click', function () {
-                goToStep(currentStep - 1);
-            });
-        });
-
-        // Step validation
         function validateStep(step) {
             switch (step) {
                 case 1:
-                    // Check if a service is selected
                     return Array.from(serviceOptions).some(option => option.checked);
-
                 case 2:
-                    // Check if date and time are selected
-                    return dateInput.value && Array.from(timeSlots).some(slot => slot.checked);
-
+                    return dateInput.value && document.querySelector('input[name="time"]:checked');
                 case 3:
-                    // Check vehicle information
-                    const vehicleBrand = document.getElementById('vehicle_brand').value;
-                    const vehicleModel = document.getElementById('vehicle_model').value;
-                    const vehicleYear = document.getElementById('vehicle_year').value;
-                    const plateNumber = document.getElementById('plate_number').value;
-
-                    return vehicleBrand && vehicleModel && vehicleYear && plateNumber;
-
+                    return ['vehicle_brand', 'vehicle_model', 'vehicle_year', 'plate_number']
+                        .every(id => document.getElementById(id).value);
                 default:
                     return true;
             }
         }
 
-        // Update summary information
+        function formatDate(dateStr) {
+            return new Date(dateStr).toLocaleDateString('id-ID', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+        }
+
+        function formatTime(timeStr) {
+            return timeStr.substring(0, 5);
+        }
+
         function updateSummary() {
-            // Service details
             const selectedService = document.querySelector('input[name="service_type"]:checked');
             if (selectedService) {
-                summaryService.textContent = selectedService.value;
-                summaryPrice.textContent = `Rp ${parseInt(selectedService.dataset.price).toLocaleString('id-ID')}`;
-                summaryDuration.textContent = `${selectedService.dataset.duration} jam`;
+                summaryElements.service.textContent = selectedService.value;
+                summaryElements.price.textContent = `Rp ${parseInt(selectedService.dataset.price).toLocaleString('id-ID')}`;
+                summaryElements.duration.textContent = `${selectedService.dataset.duration} jam`;
             }
 
-            // Schedule details
             if (dateInput.value) {
-                summaryDate.textContent = new Date(dateInput.value).toLocaleDateString('id-ID');
+                summaryElements.date.textContent = formatDate(dateInput.value);
             }
 
             const selectedTime = document.querySelector('input[name="time"]:checked');
             if (selectedTime) {
-                summaryTime.textContent = selectedTime.value;
+                summaryElements.time.textContent = formatTime(selectedTime.value);
             }
 
-            // Vehicle details
             const vehicleBrand = document.getElementById('vehicle_brand').value;
             const vehicleModel = document.getElementById('vehicle_model').value;
             const vehicleYear = document.getElementById('vehicle_year').value;
@@ -492,29 +491,130 @@ $formData = $_SESSION['form_data'];
             const notes = document.getElementById('notes').value;
 
             if (vehicleBrand && vehicleModel && vehicleYear) {
-                summaryVehicle.textContent = `${vehicleBrand} ${vehicleModel} (${vehicleYear})`;
+                summaryElements.vehicle.textContent = `${vehicleBrand} ${vehicleModel} (${vehicleYear})`;
             }
 
             if (plateNumber) {
-                summaryPlate.textContent = plateNumber;
+                summaryElements.plate.textContent = plateNumber;
             }
 
             if (notes) {
-                summaryNotes.textContent = notes;
+                summaryElements.notes.textContent = notes;
                 notesContainer.classList.remove('hidden');
             } else {
                 notesContainer.classList.add('hidden');
             }
         }
 
-        // Service selection handling
+        function fetchTimeSlots() {
+            const serviceId = serviceIdInput.value;
+            const date = dateInput.value;
+
+            if (!serviceId || !date) return;
+
+            // Create URL with query parameters
+            const url = `/service/get-times?service_id=${encodeURIComponent(serviceId)}&date=${encodeURIComponent(date)}`;
+
+            // Show loading state
+            const timeSlotsContainer = document.getElementById('time-slots-container');
+            timeSlotsContainer.innerHTML = '<p class="col-span-3 text-center py-4">Loading available time slots...</p>';
+
+            // Store the current selection before updating
+            const currentSelectedTime = document.querySelector('input[name="time"]:checked')?.value;
+
+            // Fetch the time slots using AJAX
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Handle direct array response
+                    const timeSlots = Array.isArray(data) ? data : [];
+                    if (timeSlots.length > 0) {
+                        updateTimeSlots(timeSlots, currentSelectedTime);
+                    } else {
+                        timeSlotsContainer.innerHTML = '<p class="col-span-3 text-center py-4">Tidak ada waktu tersedia untuk tanggal yang dipilih.</p>';
+                        // Disable next button since no time slots are available
+                        nextButtons[1].disabled = true;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching time slots:', error);
+                    timeSlotsContainer.innerHTML = '<p class="col-span-3 text-center text-red-500 py-4">Gagal memuat waktu tersedia. Silakan coba lagi.</p>';
+                    nextButtons[1].disabled = true;
+                });
+        }
+
+// Helper function to update time slots in the UI
+        function updateTimeSlots(timeSlots, previouslySelectedTime = null) {
+            const timeSlotsContainer = document.getElementById('time-slots-container');
+            timeSlotsContainer.innerHTML = '';
+
+            // Create all time slot elements first
+            const fragment = document.createDocumentFragment();
+
+            timeSlots.forEach(slot => {
+                const time = slot.time.substring(0, 5); // Format time as HH:MM
+                const isSelected = previouslySelectedTime === slot.time;
+
+                const label = document.createElement('label');
+                label.className = `time-slot px-4 py-3 border rounded-lg flex items-center justify-center cursor-pointer ${
+                    isSelected ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-blue-200'
+                }`;
+
+                label.innerHTML = `
+            <input type="radio" name="time" value="${slot.time}" ${isSelected ? 'checked' : ''} class="sr-only">
+            <span>${time}</span>
+        `;
+
+                fragment.appendChild(label);
+            });
+
+            // Append all elements at once to minimize reflows
+            timeSlotsContainer.appendChild(fragment);
+
+            // Reattach event listeners to new time slot elements
+            document.querySelectorAll('.time-slot input[type="radio"]').forEach(slot => {
+                slot.addEventListener('change', function () {
+                    // Update visual state for all time slots
+                    document.querySelectorAll('.time-slot').forEach(card => {
+                        card.classList.remove('border-blue-600', 'bg-blue-50');
+                        card.classList.add('border-gray-200', 'hover:border-blue-200');
+                    });
+
+                    // Update visual state for the selected time slot
+                    this.closest('.time-slot').classList.add('border-blue-600', 'bg-blue-50');
+                    this.closest('.time-slot').classList.remove('border-gray-200', 'hover:border-blue-200');
+
+                    // Enable/disable next button based on selection
+                    nextButtons[1].disabled = false;
+                });
+            });
+
+            // Update next button state based on whether any time slot is selected
+            const anyTimeSelected = document.querySelector('input[name="time"]:checked') !== null;
+            nextButtons[1].disabled = !anyTimeSelected;
+        }
+
+        nextButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                if (validateStep(currentStep)) goToStep(currentStep + 1);
+            });
+        });
+
+        prevButtons.forEach(button => {
+            button.addEventListener('click', () => goToStep(currentStep - 1));
+        });
+
         serviceOptions.forEach(option => {
             option.addEventListener('change', function () {
-                // Update hidden fields
+                serviceIdInput.value = this.dataset.id;
                 servicePriceInput.value = this.dataset.price;
                 serviceDurationInput.value = this.dataset.duration;
 
-                // Update styling
                 document.querySelectorAll('.service-option').forEach(card => {
                     card.classList.remove('border-blue-600', 'bg-blue-50');
                     card.classList.add('border-gray-200', 'hover:border-blue-200');
@@ -523,15 +623,20 @@ $formData = $_SESSION['form_data'];
                 this.closest('.service-option').classList.add('border-blue-600', 'bg-blue-50');
                 this.closest('.service-option').classList.remove('border-gray-200', 'hover:border-blue-200');
 
-                // Enable next button
                 nextButtons[0].disabled = false;
+
+                fetchTimeSlots();
             });
         });
 
-        // Time slot selection handling
-        timeSlots.forEach(slot => {
+        dateInput.addEventListener('change', function () {
+            // When changing the date, we don't immediately disable the button
+            // as fetchTimeSlots will handle that after loading the new time slots
+            fetchTimeSlots();
+        });
+
+        document.querySelectorAll('.time-slot input[type="radio"]').forEach(slot => {
             slot.addEventListener('change', function () {
-                // Update styling
                 document.querySelectorAll('.time-slot').forEach(card => {
                     card.classList.remove('border-blue-600', 'bg-blue-50');
                     card.classList.add('border-gray-200', 'hover:border-blue-200');
@@ -540,27 +645,21 @@ $formData = $_SESSION['form_data'];
                 this.closest('.time-slot').classList.add('border-blue-600', 'bg-blue-50');
                 this.closest('.time-slot').classList.remove('border-gray-200', 'hover:border-blue-200');
 
-                // Check if we can enable next button
-                nextButtons[1].disabled = !(dateInput.value && Array.from(timeSlots).some(s => s.checked));
+                nextButtons[1].disabled = !(dateInput.value && Array.from(document.querySelectorAll('.time-slot input[type="radio"]')).some(s => s.checked));
             });
         });
 
-        // Date input handling
         dateInput.addEventListener('change', function () {
-            // Check if we can enable next button
-            nextButtons[1].disabled = !(this.value && Array.from(timeSlots).some(s => s.checked));
+            nextButtons[1].disabled = !(this.value && Array.from(document.querySelectorAll('.time-slot input[type="radio"]')).some(s => s.checked));
         });
 
-        // Setup initial button states
-        nextButtons[0].disabled = !Array.from(serviceOptions).some(option => option.checked);
-        nextButtons[1].disabled = !(dateInput.value && Array.from(timeSlots).some(s => s.checked));
-
-        // Setup validation for vehicle information inputs
         const vehicleInputs = ['vehicle_brand', 'vehicle_model', 'vehicle_year', 'plate_number'];
         vehicleInputs.forEach(id => {
             document.getElementById(id).addEventListener('input', function () {
                 nextButtons[2].disabled = !validateStep(3);
             });
         });
+
+        goToStep(currentStep);
     });
 </script>

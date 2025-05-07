@@ -23,9 +23,6 @@ class Database
             \PDO::ATTR_PERSISTENT => false,
         ];
 
-
-        echo $dsn;
-
         try {
             $this->connection = new \PDO(
                 $dsn,

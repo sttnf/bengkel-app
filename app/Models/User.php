@@ -52,9 +52,9 @@ class User extends Model
         ]);
     }
 
-    public function getActiveUsers(?string $userType = null)
+    public function getActiveUsers(?string $userType = null): array
     {
-        $query = "SELECT * FROM users";
+        $query = "SELECT id, name, email, phone_number, user_type FROM users";
         $params = [];
 
         if ($userType) {

@@ -69,4 +69,9 @@ class Database
     {
         return $this->connection->lastInsertId($name);
     }
+
+    public function isConnected(): bool
+    {
+        return $this->connection !== null;
+    }
 }

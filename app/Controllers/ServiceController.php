@@ -49,20 +49,4 @@ class ServiceController extends Controller
         }
     }
 
-    #[NoReturn] public function createRequest(): void
-    {
-        $data = [
-            'service_id' => $_POST['service_id'] ?? null,
-            'user_id' => $_POST['user_id'] ?? null,
-            'technician_id' => $_POST['technician_id'] ?? null,
-            'scheduled_datetime' => $_POST['scheduled_datetime'] ?? null
-        ];
-
-        if ($data['service_id'] && $data['user_id'] && $data['scheduled_datetime']) {
-            $requestId = $this->requestServiceModel->create($data);
-            $requestId ? $this->redirect('/service') : $this->json(['error' => 'Failed to create service request']);
-        } else {
-            $this->json(['error' => 'Invalid input']);
-        }
-    }
 }

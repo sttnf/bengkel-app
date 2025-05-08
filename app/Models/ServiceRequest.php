@@ -63,13 +63,108 @@ class ServiceRequest extends Model
         return $availableTimes;
     }
 
-    public function getByUser(int $userId): array
+    public function getByUser(int $userId, ?string $status = null): array
+    {
+        $query = "
+    SELECT 
+        sr.*,
+        s.name AS service_name,
+        s.description AS service_description,
+        s.base_price AS service_price,
+        v.brand AS vehicle_brand,
+        v.model AS vehicle_model,
+        cv.year AS vehicle_year,
+        cv.license_plate,
+        u.name AS technician_name,
+        CASE WHEN p.payment_count > 0 THEN 1 ELSE 0 END AS has_payment
+    FROM 
+        {$this->table} sr
+    JOIN 
+        services s ON sr.service_id = s.id
+    JOIN 
+        customer_vehicles cv ON sr.vehicle_id = cv.id
+    JOIN 
+        vehicles v ON cv.vehicle_id = v.id
+    LEFT JOIN 
+        users u ON sr.technician_id = u.id
+    LEFT JOIN (
+        SELECT request_id, COUNT(*) AS payment_count 
+        FROM payments 
+        GROUP BY request_id
+    ) p ON p.request_id = sr.id
+    WHERE 
+        sr.user_id = :user_id";
+
+        $params = ['user_id' => $userId];
+
+        if ($status !== null) {
+            $query .= " AND sr.status = :status";
+            $params['status'] = $status;
+        }
+
+        $query .= " ORDER BY sr.scheduled_datetime DESC";
+
+        return $this->db->query($query, $params)->fetchAll();
+    }
+
+    public function getHistoryByUser(int $userId): array
     {
         return $this->db->query(
-            "SELECT * FROM {$this->table} WHERE user_id = :user_id ORDER BY scheduled_datetime DESC",
+            "SELECT
+            sr.*,
+            s.name AS service_name,
+            s.description AS service_description,
+            s.base_price AS service_price,
+            v.brand AS vehicle_brand,
+            v.model AS vehicle_model,
+            cv.year AS vehicle_year,
+            cv.license_plate,
+            u.name AS technician_name,
+            CASE WHEN p.payment_count > 0 THEN 1 ELSE 0 END AS has_payment
+        FROM {$this->table} sr
+        JOIN services s ON sr.service_id = s.id
+        JOIN customer_vehicles cv ON sr.vehicle_id = cv.id
+        JOIN vehicles v ON cv.vehicle_id = v.id
+        LEFT JOIN users u ON sr.technician_id = u.id
+        LEFT JOIN (
+            SELECT request_id, COUNT(*) AS payment_count
+            FROM payments
+            GROUP BY request_id
+        ) p ON p.request_id = sr.id
+        WHERE sr.user_id = :user_id AND sr.status IN ('completed', 'cancelled')
+        ORDER BY sr.scheduled_datetime DESC",
             ['user_id' => $userId]
         )->fetchAll();
     }
+
+   public function getById(int $id): array
+   {
+       $query = "SELECT 
+           sr.*,
+           s.name AS service_name,
+           s.description AS service_description,
+           s.base_price AS price,
+           u.name AS user_name,
+           u.email AS user_email,
+           v.brand AS vehicle_brand,
+           v.model AS vehicle_model,
+           cv.year AS vehicle_year,
+           cv.license_plate,
+           cv.color AS vehicle_color,
+           t.name AS technician_name,
+           CASE WHEN COUNT(p.id) > 0 THEN 1 ELSE 0 END AS has_payment
+       FROM {$this->table} sr
+       JOIN services s ON sr.service_id = s.id
+       JOIN users u ON sr.user_id = u.id
+       JOIN customer_vehicles cv ON sr.vehicle_id = cv.id
+       JOIN vehicles v ON cv.vehicle_id = v.id
+       LEFT JOIN users t ON sr.technician_id = t.id
+       LEFT JOIN payments p ON p.request_id = sr.id
+       WHERE sr.id = :id
+       GROUP BY sr.id";
+
+       return $this->db->query($query, ['id' => $id])->fetch();
+   }
 
     public function create(array $data): false|string
     {

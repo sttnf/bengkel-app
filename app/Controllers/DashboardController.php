@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Models\Payment;
 use App\Models\ServiceRequest;
 use App\Models\User;
 
@@ -23,6 +24,9 @@ class DashboardController extends Controller
             'technician' => $this->technicianData($userId),
             default => $this->userData($userId),
         };
+
+//        CONSOLE.LOG
+        echo "<script>console.log(" . json_encode($data) . ");</script>";
 
         return $this->render("dashboard/$userRole", $data);
     }
@@ -55,9 +59,11 @@ class DashboardController extends Controller
     private function userData(int $userId): array
     {
         $serviceModel = new ServiceRequest();
-
+//        $paymentModel = new Payment();
         return [
             'service_requests' => $serviceModel->getByUser($userId),
+            'history_requests' => $serviceModel->getHistoryByUser($userId),
+//            'payments' => $paymentModel->getPaymentUsers($userId),
         ];
     }
 }

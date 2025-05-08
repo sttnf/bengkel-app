@@ -1,22 +1,54 @@
-FROM dunglas/frankenphp
+FROM php:8.3-fpm
 
-WORKDIR /app
+# Install system dependencies and PHP extensions
+RUN apt-get update && apt-get install -y \
+    libzip-dev \
+    zip \
+    unzip \
+    git \
+    curl \
+    && docker-php-ext-install zip pdo pdo_mysql \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy composer files and install dependencies
-COPY composer.json composer.lock ./
-COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
-RUN install-php-extensions pdo_mysql gd intl zip opcache \
-    && composer install --no-dev --optimize-autoloader
+# Install Nginx
+RUN apt-get update && apt-get install -y nginx \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy application files and set permissions
+# Install Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# Configure Nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Configure PHP-FPM
+RUN echo "clear_env = no" >> /usr/local/etc/php-fpm.d/www.conf
+
+# Create working directory
+WORKDIR /var/www/html
+
+# Copy composer files first for better caching
+COPY composer.json composer.lock* ./
+
+# Install Composer dependencies
+RUN composer install --no-scripts --no-autoloader
+
+# Copy application code
 COPY . .
-RUN chown -R www-data:www-data /app && chmod -R 755 /app
 
-# Configure PHP settings
-ENV PHP_MEMORY_LIMIT=256M \
-    PHP_UPLOAD_MAX_FILESIZE=20M \
-    PHP_POST_MAX_SIZE=20M
+# Generate optimized autoloader
+RUN composer dump-autoload --optimize
 
-# Expose port and start the application
-EXPOSE 8000
-CMD ["php", "cmd.php", "serve", "--host=0.0.0.0", "--skip-migrate"]
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html
+
+# Expose port 80
+EXPOSE 80
+
+# Create startup script
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
+# Start services
+CMD ["/start.sh"]

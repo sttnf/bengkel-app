@@ -9,7 +9,7 @@ class User extends Model
 
     public function findByEmail(string $email)
     {
-        return $this->db->query("SELECT * FROM users WHERE email = :email", [
+        return $this->db->query("SELECT * FROM users WHERE email = :email LIMIT 1", [
             'email' => $email
         ])->fetch();
     }
@@ -29,7 +29,7 @@ class User extends Model
         return $user;
     }
 
-    public function register(string $name, string $email, string $password, string $role = 'customer'): \PDOStatement
+    public function register(string $name, string $email, string $password, ?string $phoneNumber = null, string $userType = 'customer'): \PDOStatement
     {
         // Validate email format
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -43,20 +43,26 @@ class User extends Model
 
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-        return $this->db->query("INSERT INTO users (name, email, password, role) VALUES (:name, :email, :password, :role)", [
+        return $this->db->query("INSERT INTO users (name, email, password, phone_number, user_type) VALUES (:name, :email, :password, :phoneNumber, :userType)", [
             'name' => $name,
             'email' => $email,
             'password' => $hashedPassword,
-            'role' => $role
+            'phoneNumber' => $phoneNumber,
+            'userType' => $userType
         ]);
     }
 
-    public function getActiveUsers(?string $role = null)
+    public function getActiveUsers(?string $userType = null)
     {
-        return $this->db->query("SELECT * FROM users WHERE is_active = :is_active AND role = :role", [
-            'is_active' => 1,
-            'role' => $role
-        ])->fetchAll();
+        $query = "SELECT * FROM users";
+        $params = [];
+
+        if ($userType) {
+            $query .= " WHERE user_type = :userType";
+            $params['userType'] = $userType;
+        }
+
+        return $this->db->query($query, $params)->fetchAll();
     }
 
     public function updatePassword(int $userId, string $newPassword)

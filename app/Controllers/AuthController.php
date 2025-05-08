@@ -7,39 +7,50 @@ use App\Models\User;
 
 class AuthController extends Controller
 {
-    private int $cookieExpiration = 3600 * 24 * 7; // 7 days
+    private int $cookieExpiration = 604800; // 7 days
 
     public function register()
     {
-
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             return $this->render('auth/register');
         }
 
-        $name = $_POST['name'] ?? '';
-        $email = $_POST['email'] ?? '';
+        $name = trim($_POST['name'] ?? '');
+        $email = filter_var($_POST['email'] ?? '', FILTER_SANITIZE_EMAIL);
         $password = $_POST['password'] ?? '';
         $passwordConfirmation = $_POST['password_confirmation'] ?? '';
 
-        $userModel = new User();
-
-        try {
-            if ($password !== $passwordConfirmation) {
-                throw new \InvalidArgumentException('Passwords do not match.');
-            }
-
-            $userModel->register($name, $email, $password);
-            $_SESSION['registration_success'] = 'Registration successful! You can now log in.';
-            header('Location: /login');
-            exit;
-        } catch (\InvalidArgumentException $e) {
-            $_SESSION['registration_error'] = $e->getMessage();
-        } catch (\Exception $e) {
-            $_SESSION['registration_error'] = 'Registration failed: ' . $e->getMessage();
+        // Validate inputs
+        $errors = [];
+        if (empty($name)) {
+            $errors[] = 'Nama harus diisi.';
+        }
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = 'Email tidak valid.';
+        }
+        if (strlen($password) < 8) {
+            $errors[] = 'Password harus minimal 8 karakter.';
+        }
+        if ($password !== $passwordConfirmation) {
+            $errors[] = 'Konfirmasi password tidak cocok.';
         }
 
-        header('Location: /register');
-        exit;
+        if (!empty($errors)) {
+            $_SESSION['registration_errors'] = $errors;
+            $_SESSION['old_input'] = ['name' => $name, 'email' => $email];
+            $this->redirect('/register');
+            return;
+        }
+
+        try {
+            new User()->register($name, $email, $password);
+            $_SESSION['registration_success'] = 'Pendaftaran berhasil! Silakan masuk ke akun Anda.';
+            $this->redirect('/login');
+        } catch (\Exception $e) {
+            $_SESSION['registration_error'] = 'Pendaftaran gagal: ' . $e->getMessage();
+            $_SESSION['old_input'] = ['name' => $name, 'email' => $email];
+            $this->redirect('/register');
+        }
     }
 
     public function login()
@@ -48,92 +59,94 @@ class AuthController extends Controller
             return $this->render('auth/login');
         }
 
-        $email = $_POST['email'] ?? '';
+        $email = filter_var($_POST['email'] ?? '', FILTER_SANITIZE_EMAIL);
         $password = $_POST['password'] ?? '';
-        $remember = $_POST['remember'] ?? null;
+        $remember = isset($_POST['remember']);
+        $redirect = filter_var($_POST['redirect'] ?? '/dashboard', FILTER_SANITIZE_URL);
 
-        $userModel = new User();
-        $user = $userModel->validateLogin($email, $password);
+        // Validate inputs
+        if (empty($email) || empty($password)) {
+            $_SESSION['login_error'] = 'Email dan password harus diisi.';
+            $_SESSION['old_input'] = ['email' => $email];
+            $this->redirect('/login');
+            return;
+        }
+
+        $user = new User()->validateLogin($email, $password);
 
         if ($user) {
             $_SESSION = [
                 'user_id' => $user['id'],
                 'user_name' => $user['name'],
-                'user_role' => $user['role'],
-                'login_success' => 'Login successful!'
+                'user_role' => $user['user_type'],
+                'login_success' => 'Login berhasil! Selamat datang kembali, ' . $user['name'] . '.'
             ];
 
             if ($remember) {
                 $this->saveSessionToCookie($user['id']);
             }
 
-
-            $_SESSION["registration_success"] = 'Login successful! Welcome back, ' . $user['name'] . '.';
-            header('Location: /dashboard');
+            $this->redirect($redirect);
         } else {
-            $_SESSION['login_error'] = 'Invalid email or password.';
-            header('Location: /login');
+            $_SESSION['login_error'] = 'Email atau password tidak valid.';
+            $_SESSION['old_input'] = ['email' => $email];
+            $this->redirect('/login');
         }
-        exit;
     }
 
     public function logout()
     {
         $this->clearSessionCookie();
         session_destroy();
-        header('Location: /login');
-        exit;
+        $this->redirect('/login');
     }
 
     private function saveSessionToCookie(int $userId): void
     {
-        $token = bin2hex(random_bytes(32)); // Generate a unique token
+        $token = bin2hex(random_bytes(32));
         $expiry = time() + $this->cookieExpiration;
-        $path = '/';
-        $domain = $_SERVER['HTTP_HOST']; // Consider making this configurable
-        $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'; // Send only over HTTPS
-        $httponly = true; // Prevent JavaScript access
+        $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
 
-        // You would typically store this token and user ID in your database
-        // for persistent login across sessions. For simplicity here, we'll just
-        // store the user ID in the cookie (less secure for production).
-        setcookie('remember_user_id', $userId, $expiry, $path, $domain, $secure, $httponly);
-        // In a real application, store the token in the database associated with the user.
-        // setcookie('remember_token', $token, $expiry, $path, $domain, $secure, $httponly);
-    }
+        // Store token in database (implementation needed)
+        // new User()->storeRememberToken($userId, $token, $expiry);
 
-    public function checkRememberMe(): void
-    {
-        if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_user_id'])) {
-            $userId = $_COOKIE['remember_user_id'];
-            $userModel = new User();
-            $user = $userModel->findById($userId); // Assuming you have a find method
-
-            if ($user) {
-                $_SESSION = [
-                    'user_id' => $user['id'],
-                    'user_name' => $user['name'],
-                    'user_role' => $user['role'],
-                    'login_success' => 'Logged in via remember me!'
-                ];
-                // Optionally regenerate the cookie for a new expiration time
-                $this->saveSessionToCookie($user['id']);
-            } else {
-                $this->clearSessionCookie();
-            }
-        }
+        setcookie('remember_token', $token, $expiry, '/', '', $secure, true);
+        setcookie('remember_user_id', $userId, $expiry, '/', '', $secure, true);
     }
 
     private function clearSessionCookie(): void
     {
-        $path = '/';
-        $domain = $_SERVER['HTTP_HOST'];
-        $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
-        $httponly = true;
+        if (isset($_COOKIE['remember_token'])) {
+            // Remove token from database (implementation needed)
+            // new User()->removeRememberToken($_COOKIE['remember_token']);
+        }
 
-        setcookie('remember_user_id', '', time() - 3600, $path, $domain, $secure, $httponly);
-        // In a real application, you'd also clear the 'remember_token' cookie
-        // and invalidate the corresponding token in the database.
-        // setcookie('remember_token', '', time() - 3600, $path, $domain, $secure, $httponly);
+        setcookie('remember_token', '', time() - 3600, '/', '', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off', true);
+        setcookie('remember_user_id', '', time() - 3600, '/', '', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off', true);
+    }
+
+    public function resetPasswordRequest()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            return $this->render('auth/reset_request');
+        }
+
+        $email = filter_var($_POST['email'] ?? '', FILTER_SANITIZE_EMAIL);
+
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $_SESSION['reset_error'] = 'Email tidak valid.';
+            $this->redirect('/reset-password');
+            return;
+        }
+
+        try {
+            // Implementation needed in User model
+            // new User()->sendPasswordResetEmail($email);
+            $_SESSION['reset_success'] = 'Instruksi reset password telah dikirim ke email Anda.';
+            $this->redirect('/login');
+        } catch (\Exception $e) {
+            $_SESSION['reset_error'] = 'Tidak dapat mengirim email reset: ' . $e->getMessage();
+            $this->redirect('/reset-password');
+        }
     }
 }

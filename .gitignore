@@ -1,0 +1,39 @@
+# Vendor directory
+/vendor/
+
+# Environment file
+.env
+
+# IDE files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+/logs/
+
+# Cache files
+/cache/
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
+
+# SQLite databases
+*.sqlite
+*.sqlite3
+
+# Compiled files
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so

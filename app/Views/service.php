@@ -1,5 +1,5 @@
 <?php
-// Initialize form data once if not set
+
 if (!isset($_SESSION['form_data'])) {
     $_SESSION['form_data'] = [
         'service_type' => '',
@@ -18,15 +18,6 @@ if (!isset($_SESSION['form_data'])) {
 
 // Get services from database and prepare for view
 $serviceModel = new \App\Models\Service();
-$services = array_map(function ($service) {
-    return [
-        'id' => $service['id'],
-        'name' => $service['name'],
-        'description' => $service['description'],
-        'duration' => number_format($service['estimated_hours'] ?? 0, 0, ',', '.') . ' jam',
-        'price' => 'Rp ' . number_format($service['base_price'] ?? 0, 0, ',', '.'),
-    ];
-}, $serviceModel->getAllActive());
 
 // Get user ID and initialize service request model
 $userId = $_SESSION['user_id'] ?? null;
@@ -135,23 +126,24 @@ $formData = $_SESSION['form_data'];
     <div class="bg-white rounded-lg shadow-sm p-6">
         <form id="bookingForm" method="POST">
             <!-- Step 1: Service Selection -->
-            <div class="step-content" id="step-1">
-                <div class="space-y-6">
-                    <h2 class="text-xl font-semibold">Pilih Layanan Servis</h2>
-                    <div class="grid gap-4">
-                        <?php foreach ($services as $service): ?>
-                            <?php
-                            $duration_value = (float)str_replace(' jam', '', $service['duration']);
-                            $price_value = (int)str_replace(['Rp ', '.'], '', $service['price']);
-                            $is_selected = $formData['service_type'] == $service['name'];
-                            ?>
-                            <label class="service-option p-4 border rounded-lg cursor-pointer transition-all
+            <?php if (!empty($services)): ?>
+                <div class="step-content" id="step-1">
+                    <div class="space-y-6">
+                        <h2 class="text-xl font-semibold">Pilih Layanan Servis</h2>
+                        <div class="grid gap-4">
+                            <?php foreach ($services as $service): ?>
+                                <?php
+                                $duration_value = (float)str_replace(' jam', '', $service['duration']);
+                                $price_value = (int)str_replace(['Rp ', '.'], '', $service['price']);
+                                $is_selected = $formData['service_type'] == $service['name'];
+                                ?>
+                                <label class="service-option p-4 border rounded-lg cursor-pointer transition-all
                                 <?= $is_selected ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-blue-200' ?>">
-                                <div class="flex items-start justify-between">
-                                    <div>
-                                        <h3 class="font-medium text-gray-900"><?= $service['name'] ?></h3>
-                                        <p class="mt-1 text-sm text-gray-500"><?= $service['description'] ?></p>
-                                        <div class="mt-2 flex items-center space-x-4">
+                                    <div class="flex items-start justify-between">
+                                        <div>
+                                            <h3 class="font-medium text-gray-900"><?= $service['name'] ?></h3>
+                                            <p class="mt-1 text-sm text-gray-500"><?= $service['description'] ?></p>
+                                            <div class="mt-2 flex items-center space-x-4">
                                             <span class="text-sm text-gray-600">
                                                 <svg class="lucide lucide-clock inline-block h-4 w-4 mr-1"
                                                      xmlns="http://www.w3.org/2000/svg" width="24" height="24"
@@ -162,34 +154,37 @@ $formData = $_SESSION['form_data'];
                                                 </svg>
                                                 <?= $service['duration'] ?>
                                             </span>
-                                            <span class="font-medium text-blue-600"><?= $service['price'] ?></span>
+                                                <span class="font-medium text-blue-600"><?= $service['price'] ?></span>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center h-5">
+                                            <input type="radio" name="service_type" value="<?= $service['name'] ?>"
+                                                   data-id="<?= $service['id'] ?>"
+                                                   data-price="<?= $price_value ?>"
+                                                   data-duration="<?= $duration_value ?>" <?= $is_selected ? 'checked' : '' ?>
+                                                   class="w-5 h-5 text-blue-600 rounded-full border-gray-300">
                                         </div>
                                     </div>
-                                    <div class="flex items-center h-5">
-                                        <input type="radio" name="service_type" value="<?= $service['name'] ?>"
-                                               data-id="<?= $service['id'] ?>"
-                                               data-price="<?= $price_value ?>"
-                                               data-duration="<?= $duration_value ?>" <?= $is_selected ? 'checked' : '' ?>
-                                               class="w-5 h-5 text-blue-600 rounded-full border-gray-300">
-                                    </div>
-                                </div>
-                            </label>
-                        <?php endforeach; ?>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <div class="mt-8 flex justify-end">
+                        <button type="button"
+                                class="next-step px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                                disabled>
+                            Lanjut
+                            <svg class="lucide lucide-chevron-right h-5 w-5 ml-2" xmlns="http://www.w3.org/2000/svg"
+                                 width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m9 18 6-6-6-6"></path>
+                            </svg>
+                        </button>
                     </div>
                 </div>
-                <div class="mt-8 flex justify-end">
-                    <button type="button"
-                            class="next-step px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                            disabled>
-                        Lanjut
-                        <svg class="lucide lucide-chevron-right h-5 w-5 ml-2" xmlns="http://www.w3.org/2000/svg"
-                             width="24" height="24" viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="m9 18 6-6-6-6"></path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
+            <?php else: ?>
+                <p>Tidak ada layanan tersedia.</p>
+            <?php endif; ?>
 
             <!-- Step 2: Schedule Selection -->
             <div class="step-content hidden" id="step-2">
@@ -396,270 +391,3 @@ $formData = $_SESSION['form_data'];
         </form>
     </div>
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        let currentStep = 1;
-
-        const steps = document.querySelectorAll('.step-content');
-        const stepIndicators = document.querySelectorAll('[id^="step-indicator-"]');
-        const nextButtons = document.querySelectorAll('.next-step');
-        const prevButtons = document.querySelectorAll('.prev-step');
-        const serviceOptions = document.querySelectorAll('input[name="service_type"]');
-        const dateInput = document.getElementById('date');
-        const serviceIdInput = document.getElementById('service_id');
-        const servicePriceInput = document.getElementById('service_price');
-        const serviceDurationInput = document.getElementById('service_duration');
-
-        const summaryElements = {
-            service: document.getElementById('summary-service'),
-            price: document.getElementById('summary-price'),
-            duration: document.getElementById('summary-duration'),
-            date: document.getElementById('summary-date'),
-            time: document.getElementById('summary-time'),
-            vehicle: document.getElementById('summary-vehicle'),
-            plate: document.getElementById('summary-plate'),
-            notes: document.getElementById('summary-notes')
-        };
-        const notesContainer = document.querySelector('.notes-container');
-
-        function goToStep(step) {
-            steps.forEach(s => s.classList.add('hidden'));
-            stepIndicators.forEach((indicator, idx) => {
-                const isCompleted = idx + 1 < step;
-                const isCurrent = idx + 1 === step;
-
-                indicator.className = "relative flex items-center justify-center w-10 h-10 rounded-full " +
-                    (isCompleted || isCurrent ?
-                        "bg-blue-600 text-white" :
-                        "bg-white text-gray-400 border-2 border-gray-200");
-            });
-            document.getElementById(`step-${step}`).classList.remove('hidden');
-            currentStep = step;
-
-            if (step === 4) updateSummary();
-        }
-
-        function validateStep(step) {
-            switch (step) {
-                case 1:
-                    return Array.from(serviceOptions).some(option => option.checked);
-                case 2:
-                    return dateInput.value && document.querySelector('input[name="time"]:checked');
-                case 3:
-                    return ['vehicle_brand', 'vehicle_model', 'vehicle_year', 'plate_number']
-                        .every(id => document.getElementById(id).value);
-                default:
-                    return true;
-            }
-        }
-
-        function formatDate(dateStr) {
-            return new Date(dateStr).toLocaleDateString('id-ID', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-            });
-        }
-
-        function formatTime(timeStr) {
-            return timeStr.substring(0, 5);
-        }
-
-        function updateSummary() {
-            const selectedService = document.querySelector('input[name="service_type"]:checked');
-            if (selectedService) {
-                summaryElements.service.textContent = selectedService.value;
-                summaryElements.price.textContent = `Rp ${parseInt(selectedService.dataset.price).toLocaleString('id-ID')}`;
-                summaryElements.duration.textContent = `${selectedService.dataset.duration} jam`;
-            }
-
-            if (dateInput.value) {
-                summaryElements.date.textContent = formatDate(dateInput.value);
-            }
-
-            const selectedTime = document.querySelector('input[name="time"]:checked');
-            if (selectedTime) {
-                summaryElements.time.textContent = formatTime(selectedTime.value);
-            }
-
-            const vehicleBrand = document.getElementById('vehicle_brand').value;
-            const vehicleModel = document.getElementById('vehicle_model').value;
-            const vehicleYear = document.getElementById('vehicle_year').value;
-            const plateNumber = document.getElementById('plate_number').value;
-            const notes = document.getElementById('notes').value;
-
-            if (vehicleBrand && vehicleModel && vehicleYear) {
-                summaryElements.vehicle.textContent = `${vehicleBrand} ${vehicleModel} (${vehicleYear})`;
-            }
-
-            if (plateNumber) {
-                summaryElements.plate.textContent = plateNumber;
-            }
-
-            if (notes) {
-                summaryElements.notes.textContent = notes;
-                notesContainer.classList.remove('hidden');
-            } else {
-                notesContainer.classList.add('hidden');
-            }
-        }
-
-        function fetchTimeSlots() {
-            const serviceId = serviceIdInput.value;
-            const date = dateInput.value;
-
-            if (!serviceId || !date) return;
-
-            // Create URL with query parameters
-            const url = `/service/get-times?service_id=${encodeURIComponent(serviceId)}&date=${encodeURIComponent(date)}`;
-
-            // Show loading state
-            const timeSlotsContainer = document.getElementById('time-slots-container');
-            timeSlotsContainer.innerHTML = '<p class="col-span-3 text-center py-4">Loading available time slots...</p>';
-
-            // Store the current selection before updating
-            const currentSelectedTime = document.querySelector('input[name="time"]:checked')?.value;
-
-            // Fetch the time slots using AJAX
-            fetch(url)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    // Handle direct array response
-                    const timeSlots = Array.isArray(data) ? data : [];
-                    if (timeSlots.length > 0) {
-                        updateTimeSlots(timeSlots, currentSelectedTime);
-                    } else {
-                        timeSlotsContainer.innerHTML = '<p class="col-span-3 text-center py-4">Tidak ada waktu tersedia untuk tanggal yang dipilih.</p>';
-                        // Disable next button since no time slots are available
-                        nextButtons[1].disabled = true;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching time slots:', error);
-                    timeSlotsContainer.innerHTML = '<p class="col-span-3 text-center text-red-500 py-4">Gagal memuat waktu tersedia. Silakan coba lagi.</p>';
-                    nextButtons[1].disabled = true;
-                });
-        }
-
-// Helper function to update time slots in the UI
-        function updateTimeSlots(timeSlots, previouslySelectedTime = null) {
-            const timeSlotsContainer = document.getElementById('time-slots-container');
-            timeSlotsContainer.innerHTML = '';
-
-            // Create all time slot elements first
-            const fragment = document.createDocumentFragment();
-
-            timeSlots.forEach(slot => {
-                const time = slot.time.substring(0, 5); // Format time as HH:MM
-                const isSelected = previouslySelectedTime === slot.time;
-
-                const label = document.createElement('label');
-                label.className = `time-slot px-4 py-3 border rounded-lg flex items-center justify-center cursor-pointer ${
-                    isSelected ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-blue-200'
-                }`;
-
-                label.innerHTML = `
-            <input type="radio" name="time" value="${slot.time}" ${isSelected ? 'checked' : ''} class="sr-only">
-            <span>${time}</span>
-        `;
-
-                fragment.appendChild(label);
-            });
-
-            // Append all elements at once to minimize reflows
-            timeSlotsContainer.appendChild(fragment);
-
-            // Reattach event listeners to new time slot elements
-            document.querySelectorAll('.time-slot input[type="radio"]').forEach(slot => {
-                slot.addEventListener('change', function () {
-                    // Update visual state for all time slots
-                    document.querySelectorAll('.time-slot').forEach(card => {
-                        card.classList.remove('border-blue-600', 'bg-blue-50');
-                        card.classList.add('border-gray-200', 'hover:border-blue-200');
-                    });
-
-                    // Update visual state for the selected time slot
-                    this.closest('.time-slot').classList.add('border-blue-600', 'bg-blue-50');
-                    this.closest('.time-slot').classList.remove('border-gray-200', 'hover:border-blue-200');
-
-                    // Enable/disable next button based on selection
-                    nextButtons[1].disabled = false;
-                });
-            });
-
-            // Update next button state based on whether any time slot is selected
-            const anyTimeSelected = document.querySelector('input[name="time"]:checked') !== null;
-            nextButtons[1].disabled = !anyTimeSelected;
-        }
-
-        nextButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                if (validateStep(currentStep)) goToStep(currentStep + 1);
-            });
-        });
-
-        prevButtons.forEach(button => {
-            button.addEventListener('click', () => goToStep(currentStep - 1));
-        });
-
-        serviceOptions.forEach(option => {
-            option.addEventListener('change', function () {
-                serviceIdInput.value = this.dataset.id;
-                servicePriceInput.value = this.dataset.price;
-                serviceDurationInput.value = this.dataset.duration;
-
-                document.querySelectorAll('.service-option').forEach(card => {
-                    card.classList.remove('border-blue-600', 'bg-blue-50');
-                    card.classList.add('border-gray-200', 'hover:border-blue-200');
-                });
-
-                this.closest('.service-option').classList.add('border-blue-600', 'bg-blue-50');
-                this.closest('.service-option').classList.remove('border-gray-200', 'hover:border-blue-200');
-
-                nextButtons[0].disabled = false;
-
-                fetchTimeSlots();
-            });
-        });
-
-        dateInput.addEventListener('change', function () {
-            // When changing the date, we don't immediately disable the button
-            // as fetchTimeSlots will handle that after loading the new time slots
-            fetchTimeSlots();
-        });
-
-        document.querySelectorAll('.time-slot input[type="radio"]').forEach(slot => {
-            slot.addEventListener('change', function () {
-                document.querySelectorAll('.time-slot').forEach(card => {
-                    card.classList.remove('border-blue-600', 'bg-blue-50');
-                    card.classList.add('border-gray-200', 'hover:border-blue-200');
-                });
-
-                this.closest('.time-slot').classList.add('border-blue-600', 'bg-blue-50');
-                this.closest('.time-slot').classList.remove('border-gray-200', 'hover:border-blue-200');
-
-                nextButtons[1].disabled = !(dateInput.value && Array.from(document.querySelectorAll('.time-slot input[type="radio"]')).some(s => s.checked));
-            });
-        });
-
-        dateInput.addEventListener('change', function () {
-            nextButtons[1].disabled = !(this.value && Array.from(document.querySelectorAll('.time-slot input[type="radio"]')).some(s => s.checked));
-        });
-
-        const vehicleInputs = ['vehicle_brand', 'vehicle_model', 'vehicle_year', 'plate_number'];
-        vehicleInputs.forEach(id => {
-            document.getElementById(id).addEventListener('input', function () {
-                nextButtons[2].disabled = !validateStep(3);
-            });
-        });
-
-        goToStep(currentStep);
-    });
-</script>

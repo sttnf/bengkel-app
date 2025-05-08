@@ -6,6 +6,7 @@ use App\Core\Controller;
 use App\Models\Payment;
 use App\Models\ServiceRequest;
 use App\Models\User;
+use App\Models\Vehicle;
 
 class DashboardController extends Controller
 {
@@ -59,11 +60,14 @@ class DashboardController extends Controller
     private function userData(int $userId): array
     {
         $serviceModel = new ServiceRequest();
-//        $paymentModel = new Payment();
+        $paymentModel = new Payment();
+        $vehicleModel = new Vehicle();
+
         return [
-            'service_requests' => $serviceModel->getByUser($userId),
+            'active_requests' => $serviceModel->getByUser($userId, ['pending', 'in_progress']),
             'history_requests' => $serviceModel->getHistoryByUser($userId),
-//            'payments' => $paymentModel->getPaymentUsers($userId),
+            'payments' => $paymentModel->getPaymentUsers($userId),
+            'vehicles' => $vehicleModel->getByUserId($userId),
         ];
     }
 }

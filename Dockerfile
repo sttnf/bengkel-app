@@ -37,11 +37,15 @@ RUN composer install --no-scripts --no-autoloader
 # Copy application code
 COPY . .
 
+# Remove file cmd.php on production
+RUN rm -f cmd.php
+
 # Generate optimized autoloader
 RUN composer dump-autoload --optimize
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html
+
 
 # Expose port 80
 EXPOSE 80

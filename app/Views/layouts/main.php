@@ -134,5 +134,13 @@ include_once __DIR__ . '/../../Components/head.php';
                 Bengkel Kita. All rights reserved.</p></div>
     </div>
 </footer>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    });
+</script>
 </body>
+
 </html>

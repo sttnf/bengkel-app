@@ -59,10 +59,10 @@ class PaymentController extends Controller
     {
         $this->ensureLoggedIn();
 
-        $paymentId = $_GET['id'] ?? null;
-        if (!$paymentId) $this->redirect('/dashboard');
+        $requestId = $_GET['id'] ?? null;
+        if (!$requestId) $this->redirect('/dashboard');
 
-        $payment = new Payment()->getInvoiceDetails($paymentId);
+        $payment = new Payment()->getInvoiceDetails($requestId);
 
         if (!$payment || $payment['user_id'] != $_SESSION['user_id']) {
             $this->redirect('/dashboard');

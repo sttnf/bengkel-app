@@ -1,160 +1,185 @@
 <?php
-$pageTitle = "Dashboard Pengguna - Manajemen Servis Mobil";
-$pageHeader = "Dashboard Pengguna";
 
-// Profil pengguna statis
-$userProfile = [
-    'nama' => 'Rizky Maulana',
-    'email' => 'rizky@example.com',
-    'telepon' => '+62 812 3456 7890',
-    'jumlah_kendaraan' => 2,
-    'login_terakhir' => '2025-05-06 20:30',
-];
+$pageTitle = "Dasbor";
+$pageHeader = "Dasbor";
 
-$riwayatServis = [
-    ['servis' => 'Rotasi Ban', 'tanggal' => '2025-04-20', 'kendaraan' => 'Toyota Corolla 2020'],
-    ['servis' => 'Pemeriksaan Menyeluruh', 'tanggal' => '2025-03-15', 'kendaraan' => 'Honda Civic 2019'],
-];
-
-$riwayatPembayaran = [
-    ['id' => 'P-12345', 'jumlah' => 250000, 'status' => 'selesai', 'tanggal' => '2025-05-03'],
-    ['id' => 'P-12346', 'jumlah' => 100000, 'status' => 'selesai', 'tanggal' => '2025-04-22'],
-];
-
-$tindakanCepat = [
-    ['link' => 'permintaan-servis-baru.php', 'ikon' => 'plus-circle', 'label' => 'Ajukan Servis', 'warna' => 'blue'],
-    ['link' => 'kendaraan-saya.php', 'ikon' => 'car', 'label' => 'Kendaraan Saya', 'warna' => 'green'],
-    ['link' => 'pengaturan-akun.php', 'ikon' => 'settings', 'label' => 'Pengaturan Akun', 'warna' => 'violet'],
-    ['link' => 'bantuan.php', 'ikon' => 'life-buoy', 'label' => 'Bantuan', 'warna' => 'rose'],
-];
-
-$service_requests = $service_requests ?? [];
+$activeServices = $active_requests ?? [];
+$serviceHistory = $history_requests ?? [];
+$vehicles = $vehicles ?? [];
 
 ob_start();
 ?>
-    <div class="container mx-auto px-4 py-8">
 
-        <!-- Selamat Datang -->
-        <div class="bg-white p-6 rounded-xl shadow-md border mb-6">
-            <h2 class="text-2xl font-bold text-gray-800">Halo, <?= htmlspecialchars($userProfile['nama']) ?></h2>
-            <p class="text-sm text-gray-500">Login terakhir: <?= htmlspecialchars($userProfile['login_terakhir']) ?></p>
-        </div>
+    <div class="bg-gray-100 min-h-screen py-8 px-4 sm:px-6 lg:px-8 font-sans antialiased text-gray-900">
+        <div class="max-w-6xl mx-auto">
+            <header class="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <h1 class="text-2xl font-semibold tracking-tight"><?= $pageHeader ?></h1>
+                <p class="text-gray-500">Selamat datang kembali, <?= htmlspecialchars($_SESSION['user_name']) ?> 👋</p>
+            </header>
 
-        <!-- Grid Utama -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <main class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
 
-            <!-- Permintaan Servis -->
-            <div class="bg-white p-5 rounded-xl shadow-md border">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-bold text-gray-700">Servis Berlangsung</h3>
-                    <a href="daftar-servis.php" class="text-sm text-blue-600 hover:underline">Lihat Semua</a>
-                </div>
-                <div class="space-y-3">
-                    <?php if (empty($service_requests)): ?>
-                        <div class="bg-gray-50 border-l-4 border-gray-300 p-4 rounded text-sm text-gray-500">
-                            Tidak ada servis yang sedang berlangsung.
-                        </div>
-                    <?php else: ?>
-                        <?php foreach ($service_requests as $request): ?>
-                            <?php
-                            $warna = match ($request['status']) {
-                                'pending' => 'amber',
-                                'in_progress' => 'blue',
-                                'completed' => 'green',
-                                default => 'gray'
-                            };
-                            ?>
-                            <form method="post" name="form-<?= $request['id'] ?>">
-                                <div class="bg-gray-50 border-l-4 border-<?= $warna ?>-500 p-4 rounded">
-                                    <div class="flex justify-between items-center font-semibold text-gray-800 mb-1">
-                                        <span><?= htmlspecialchars($request['service_name']) ?></span>
-                                        <span class="text-xs text-gray-400">#<?= $request['id'] ?></span>
-                                    </div>
-                                    <p class="text-sm text-gray-600"><?= htmlspecialchars($request['vehicle_brand']) ?>
-                                        <?= htmlspecialchars($request['vehicle_model']) ?>
-                                        (<?= $request['vehicle_year'] ?>)
-                                        — <?= htmlspecialchars($request['license_plate']) ?></p>
-                                    <p class="text-sm text-gray-500 capitalize">
-                                        Status: <?= str_replace('_', ' ', $request['status']) ?></p>
-                                    <p class="text-sm text-gray-500">
-                                        Jadwal: <?= date('d M Y, H:i', strtotime($request['scheduled_datetime'])) ?></p>
-
-                                    <?php if (empty($request['has_payment'])): ?>
-                                        <a href="/dashboard/customer/payment?id=<?= $request['id'] ?>"
-                                           class="inline-block mt-2 px-3 py-1 text-sm text-white bg-red-500 rounded hover:bg-red-600">
-                                            Bayar Sekarang
-                                        </a>
-                                    <?php else: ?>
-                                        <?php
-                                        // Get payment ID for this service request
-                                        $paymentModel = new \App\Models\Payment();
-                                        $paymentData = $paymentModel->getByRequestId($request['id']);
-
-                                        $paymentId = $paymentData['id'] ?? null;
-                                        ?>
-                                        <a href="dashboard/customer/invoice?id=<?= $paymentId ?>"
-                                           class="inline-block mt-2 px-3 py-1 text-sm text-white bg-green-500 rounded hover:bg-green-600">
-                                            Lihat Invoice
-                                        </a>
-                                    <?php endif; ?>
+                <?php if (!empty($vehicles)): ?>
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                        <div class="p-4 sm:p-6">
+                            <h2 class="text-lg font-medium text-gray-900 mb-3 flex items-center space-x-2">
+                                <i data-lucide="car" class="w-5 h-5"></i>
+                                <span>Kendaraan Anda</span>
+                            </h2>
+                            <ul class="space-y-2">
+                                <?php foreach ($vehicles as $vehicle): ?>
+                                    <li class="bg-gray-50 rounded-lg border border-gray-200 p-3 flex items-center justify-between text-sm">
+                                        <div>
+                                            <h3 class="font-semibold text-gray-800"><?= htmlspecialchars($vehicle['brand']) ?> <?= htmlspecialchars($vehicle['model']) ?></h3>
+                                            <p class="text-gray-500 text-xs"><?= htmlspecialchars($vehicle['year']) ?>
+                                                | <?= htmlspecialchars($vehicle['license_plate']) ?></p>
+                                        </div>
+                                        <div class="flex flex-shrink-0 ml-2 space-x-1">
+                                            <a href="/servis/baru?vehicle_id=<?= $vehicle['id'] ?>"
+                                               class="inline-flex items-center px-2 py-1 font-medium text-blue-600 bg-blue-100 rounded-lg hover:bg-blue-200 text-xs">
+                                                <i data-lucide="wrench" class="w-4 h-4 mr-1"></i>
+                                            </a>
+                                            <a href="edit-kendaraan.php?id=<?= $vehicle['id'] ?>"
+                                               class="inline-flex items-center px-2 py-1 font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 text-xs">
+                                                <i data-lucide="edit" class="w-4 h-4"></i>
+                                            </a>
+                                            <a href="hapus-kendaraan.php?id=<?= $vehicle['id'] ?>"
+                                               class="inline-flex items-center px-2 py-1 font-medium text-red-600 bg-red-100 rounded-lg hover:bg-red-200 text-xs">
+                                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                            </a>
+                                        </div>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                            <?php if (count($vehicles) > 3): ?>
+                                <div class="mt-3">
+                                    <a href="kendaraan-saya.php" class="text-blue-600 hover:underline text-sm">Lihat
+                                        Semua</a>
                                 </div>
-                            </form>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </div>
-            </div>
-
-            <!-- Riwayat Servis -->
-            <div class="bg-white p-5 rounded-xl shadow-md border">
-                <h3 class="text-lg font-bold text-gray-700 mb-3">Riwayat Servis</h3>
-                <div class="space-y-3">
-                    <?php foreach ($riwayatServis as $riwayat): ?>
-                        <div class="p-4 bg-gray-50 border-l-4 border-green-500 rounded">
-                            <p class="font-medium text-gray-800"><?= htmlspecialchars($riwayat['servis']) ?></p>
-                            <p class="text-sm text-gray-500"><?= htmlspecialchars($riwayat['kendaraan']) ?>
-                                — <?= $riwayat['tanggal'] ?></p>
+                            <?php endif; ?>
                         </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
+                    </div>
+                <?php endif; ?>
 
-            <!-- Riwayat Pembayaran -->
-            <div class="bg-white p-5 rounded-xl shadow-md border">
-                <h3 class="text-lg font-bold text-gray-700 mb-3">Riwayat Pembayaran</h3>
-                <div class="space-y-3">
-                    <?php foreach ($riwayatPembayaran as $bayar): ?>
-                        <div class="p-4 bg-gray-50 border-l-4 border-blue-500 rounded">
-                            <div class="flex justify-between font-medium text-gray-800">
-                                <span>Pembayaran #<?= htmlspecialchars($bayar['id']) ?></span>
-                                <span class="text-xs text-gray-400"><?= $bayar['tanggal'] ?></span>
+                <?php if (!empty($activeServices)): ?>
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 md:col-span-2 lg:col-span-1">
+                        <div class="p-4 sm:p-6">
+                            <div class="flex items-center justify-between mb-3">
+                                <h2 class="text-lg font-medium text-gray-900 flex items-center space-x-2">
+                                    <i data-lucide="activity" class="w-5 h-5"></i>
+                                    <span>Servis Aktif</span>
+                                    <span class="inline-block py-1 px-2 rounded-full text-xs font-semibold bg-blue-100 text-blue-600 ml-2"><?= count($activeServices) ?></span>
+                                </h2>
                             </div>
-                            <p class="text-sm text-gray-500">Rp <?= number_format($bayar['jumlah'], 0, ',', '.') ?> —
-                                Status: <?= ucfirst($bayar['status']) ?></p>
-                            <a href="/invoice?id=<?= substr($bayar['id'], 2) ?>"
-                               class="inline-block mt-2 px-3 py-1 text-sm text-white bg-blue-500 rounded hover:bg-blue-600">
-                                Lihat Invoice
-                            </a>
+                            <ul class="space-y-4">
+                                <?php foreach ($activeServices as $service): ?>
+                                    <?php
+                                    $statusColor = match ($service['status']) {
+                                        'pending' => 'yellow',
+                                        'in_progress' => 'blue',
+                                        'completed' => 'green',
+                                        default => 'gray',
+                                    };
+                                    ?>
+                                    <li class="bg-gray-50 rounded-lg border border-gray-200 p-4">
+                                        <div class="flex justify-between items-center mb-2">
+                                            <h3 class="font-semibold text-gray-800"><?= htmlspecialchars($service['service_name']) ?></h3>
+                                            <span class="inline-block px-2 py-1 text-xs font-medium rounded-full bg-<?= $statusColor ?>-100 text-<?= $statusColor ?>-600">
+                                                <?= ucfirst(str_replace('_', ' ', $service['status'])) ?>
+                                            </span>
+                                        </div>
+                                        <p class="text-gray-500 text-sm"><?= $service['vehicle_brand'] ?> <?= $service['vehicle_model'] ?>
+                                            (<?= $service['vehicle_year'] ?>)</p>
+                                        <p class="text-gray-600 text-xs">
+                                            Dijadwalkan: <?= date('d M Y, H:i', strtotime($service['scheduled_datetime'])) ?></p>
+                                        <?php if (!empty($service['mechanic_name'])): ?>
+                                            <p class="text-gray-600 text-xs">
+                                                Mekanik: <?= htmlspecialchars($service['mechanic_name']) ?></p>
+                                        <?php endif; ?>
+                                        <div class="mt-4 flex w-full ">
+                                            <a href="/dashboard/customer/<?= empty($service['has_payment']) ? 'payment' : 'invoice' ?>?id=<?= $service['id'] ?>"
+                                               class="w-full text-center justify-center inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-<?= empty($service['has_payment']) ? 'red' : 'green' ?>-600 rounded-lg hover:bg-<?= empty($service['has_payment']) ? 'red' : 'green' ?>-700">
+                                                <?= empty($service['has_payment']) ? 'Bayar' : 'Detail' ?>
+                                                <i data-lucide="<?= empty($service['has_payment']) ? 'credit-card' : 'eye' ?>"
+                                                   class="w-4 h-4 ml-1"></i>
+                                            </a>
+                                        </div>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
                         </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
+                    </div>
+                <?php endif; ?>
 
-            <!-- Tindakan Cepat -->
-            <div class="bg-white p-5 rounded-xl shadow-md border">
-                <h3 class="text-lg font-bold text-gray-700 mb-3">Tindakan Cepat</h3>
-                <div class="grid grid-cols-2 gap-4">
-                    <?php foreach ($tindakanCepat as $t): ?>
-                        <a href="<?= htmlspecialchars($t['link']) ?>"
-                           class="flex flex-col items-center justify-center bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition">
-                            <div class="p-2 bg-<?= $t['warna'] ?>-100 text-<?= $t['warna'] ?>-600 rounded-full mb-2">
-                                <i data-lucide="<?= $t['ikon'] ?>" class="w-5 h-5"></i>
+                <?php if (!empty($serviceHistory)): ?>
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 md:col-span-2">
+                        <div class="p-4 sm:p-6">
+                            <div class="flex items-center justify-between mb-3">
+                                <h2 class="text-lg font-medium text-gray-900 flex items-center space-x-2">
+                                    <i data-lucide="history" class="w-5 h-5"></i>
+                                    <span>Riwayat Servis</span>
+                                    <span class="inline-block py-1 px-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 ml-2"><?= count($serviceHistory) ?></span>
+                                </h2>
                             </div>
-                            <span class="text-sm font-medium text-gray-700"><?= htmlspecialchars($t['label']) ?></span>
-                        </a>
-                    <?php endforeach; ?>
-                </div>
-            </div>
+                            <ul class="divide-y divide-gray-200">
+                                <?php if (!empty($serviceHistory)): ?>
+                                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 md:col-span-2">
+                                        <div class="p-4 sm:p-6">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <h2 class="text-lg font-medium text-gray-900 flex items-center space-x-2">
+                                                    <i data-lucide="history" class="w-5 h-5"></i>
+                                                    <span>Riwayat Servis</span>
+                                                    <span class="inline-block py-1 px-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 ml-2"><?= count($serviceHistory) ?></span>
+                                                </h2>
+                                            </div>
+                                            <ul class="space-y-3">
+                                                <?php foreach ($serviceHistory as $item): ?>
+                                                    <li class="bg-gray-50 rounded-lg border border-gray-200 p-3">
+                                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-y-2 md:gap-x-4 items-start">
+                                                            <div>
+                                                                <h3 class="font-semibold text-gray-800 text-sm"><?= htmlspecialchars($item['service_name']) ?></h3>
+                                                                <p class="text-gray-500 text-xs"><?= $item['vehicle_brand'] ?> <?= $item['vehicle_model'] ?>
+                                                                    (<?= $item['vehicle_year'] ?>)</p>
+                                                                <p class="text-gray-500 text-xs">Selesai
+                                                                    pada: <?= date('d M Y', strtotime($item['completion_datetime'] ?? $item['scheduled_datetime'])) ?></p>
+                                                            </div>
+                                                            <div class="md:text-right">
+                                                <span class="inline-block px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+                                                    <?= ucfirst($item['status']) ?>
+                                                </span>
+                                                                <?php if (empty($item['has_payment'])): ?>
+                                                                    <a href="/dashboard/customer/payment?id=<?= $item['id'] ?>"
+                                                                       class="inline-flex items-center mt-2 px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">
+                                                                        Bayar <i data-lucide="credit-card"
+                                                                                 class="w-4 h-4 ml-1"></i>
+                                                                    </a>
+                                                                <?php elseif (!empty($item['has_payment'])): ?>
+                                                                    <a href="/dashboard/customer/invoice?id=<?= $item['payment_id'] ?>"
+                                                                       class="inline-flex items-center mt-2 text-sm text-blue-600 hover:text-blue-700">
+                                                                        Invoice <i data-lucide="file-text"
+                                                                                   class="w-4 h-4 ml-1"></i>
+                                                                    </a>
+                                                                <?php endif; ?>
+                                                            </div>
+                                                        </div>
+                                                    </li>
+                                                <?php endforeach; ?>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                            </ul>
+                        </div>
+                    </div>
+                <?php endif; ?>
 
+                <?php if (empty($vehicles) && empty($activeServices) && empty($serviceHistory)): ?>
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 md:col-span-2">
+                        <p class="text-gray-600 italic text-center">Belum ada data yang ditampilkan.</p>
+                    </div>
+                <?php endif; ?>
+
+            </main>
         </div>
     </div>
 

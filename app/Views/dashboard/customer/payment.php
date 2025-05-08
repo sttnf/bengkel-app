@@ -3,10 +3,10 @@ $title = "Pembayaran Servis";
 $layout = "main";
 ?>
 
-<div class="bg-gray-100 py-12">
-    <div class="max-w-md mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
-        <div class="px-6 py-8">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-6">Pembayaran Servis</h2>
+<div class="bg-gray-100 py-8 px-4 sm:px-6 lg:px-8 font-sans antialiased">
+    <div class="max-w-md mx-auto bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-6">
+            <h2 class="text-2xl font-semibold text-gray-900 tracking-tight mb-4">Pembayaran Servis</h2>
 
             <?php if (!empty($error)): ?>
                 <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -14,9 +14,9 @@ $layout = "main";
                 </div>
             <?php endif; ?>
 
-            <div class="mb-6">
+            <div class="mb-4">
                 <h3 class="text-lg font-semibold text-gray-700 mb-2">Detail Servis</h3>
-                <div class="bg-gray-50 rounded-md p-4 space-y-2 text-sm text-gray-600">
+                <div class="bg-gray-50 rounded-lg border border-gray-200 p-4 space-y-2 text-sm text-gray-600">
                     <?php
                     $details = [
                         'Jenis Servis' => $service['service_name'] ?? '-',
@@ -46,7 +46,7 @@ $layout = "main";
                     <div class="relative rounded-md shadow-sm">
                         <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">Rp</span>
                         <input type="text" id="formatted_amount"
-                               class="pl-10 pr-3 py-2 block w-full rounded-md border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                               class="pl-10 pr-3 py-2 block w-full rounded-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                                value="<?= number_format((float)($service['price'] ?? 0), 0, ',', '.') ?>">
                     </div>
                 </div>
@@ -55,18 +55,19 @@ $layout = "main";
                     <label for="payment_method" class="block text-sm font-medium text-gray-700 mb-2">Metode
                         Pembayaran</label>
                     <select id="payment_method" name="payment_method" required
-                            class="block w-full bg-white border-gray-300 px-4 py-2 rounded shadow focus:ring-blue-500">
+                            class="block w-full bg-white border border-gray-300 px-4 py-2 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900">
                         <option value="cash">Tunai</option>
                         <option value="qris">QRIS</option>
                     </select>
                 </div>
 
-                <div class="flex justify-end items-center pt-4 gap-4">
+                <div class="flex justify-end items-center pt-4 gap-3">
                     <a href="/dashboard"
-                       class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border-gray-300 rounded-md shadow hover:bg-gray-50">←
-                        Kembali</a>
+                       class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
+                        ← Kembali
+                    </a>
                     <button type="submit"
-                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md shadow hover:bg-blue-700">
+                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
                         Bayar Sekarang →
                     </button>
                 </div>

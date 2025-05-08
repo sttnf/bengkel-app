@@ -121,53 +121,38 @@ ob_start();
                                     <span class="inline-block py-1 px-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 ml-2"><?= count($serviceHistory) ?></span>
                                 </h2>
                             </div>
-                            <ul class="divide-y divide-gray-200">
-                                <?php if (!empty($serviceHistory)): ?>
-                                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 md:col-span-2">
-                                        <div class="p-4 sm:p-6">
-                                            <div class="flex items-center justify-between mb-3">
-                                                <h2 class="text-lg font-medium text-gray-900 flex items-center space-x-2">
-                                                    <i data-lucide="history" class="w-5 h-5"></i>
-                                                    <span>Riwayat Servis</span>
-                                                    <span class="inline-block py-1 px-2 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 ml-2"><?= count($serviceHistory) ?></span>
-                                                </h2>
+                            <ul class="space-y-3">
+                                <?php foreach ($serviceHistory as $item): ?>
+                                    <li class="bg-gray-50 rounded-lg border border-gray-200 p-3">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-y-2 md:gap-x-4 items-start">
+                                            <div>
+                                                <h3 class="font-semibold text-gray-800 text-sm"><?= htmlspecialchars($item['service_name']) ?></h3>
+                                                <p class="text-gray-500 text-xs"><?= $item['vehicle_brand'] ?> <?= $item['vehicle_model'] ?>
+                                                    (<?= $item['vehicle_year'] ?>)</p>
+                                                <p class="text-gray-500 text-xs">Selesai
+                                                    pada: <?= date('d M Y', strtotime($item['completion_datetime'] ?? $item['scheduled_datetime'])) ?></p>
                                             </div>
-                                            <ul class="space-y-3">
-                                                <?php foreach ($serviceHistory as $item): ?>
-                                                    <li class="bg-gray-50 rounded-lg border border-gray-200 p-3">
-                                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-y-2 md:gap-x-4 items-start">
-                                                            <div>
-                                                                <h3 class="font-semibold text-gray-800 text-sm"><?= htmlspecialchars($item['service_name']) ?></h3>
-                                                                <p class="text-gray-500 text-xs"><?= $item['vehicle_brand'] ?> <?= $item['vehicle_model'] ?>
-                                                                    (<?= $item['vehicle_year'] ?>)</p>
-                                                                <p class="text-gray-500 text-xs">Selesai
-                                                                    pada: <?= date('d M Y', strtotime($item['completion_datetime'] ?? $item['scheduled_datetime'])) ?></p>
-                                                            </div>
-                                                            <div class="md:text-right">
+                                            <div class="md:text-right">
                                                 <span class="inline-block px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
                                                     <?= ucfirst($item['status']) ?>
                                                 </span>
-                                                                <?php if (empty($item['has_payment'])): ?>
-                                                                    <a href="/dashboard/customer/payment?id=<?= $item['id'] ?>"
-                                                                       class="inline-flex items-center mt-2 px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">
-                                                                        Bayar <i data-lucide="credit-card"
-                                                                                 class="w-4 h-4 ml-1"></i>
-                                                                    </a>
-                                                                <?php elseif (!empty($item['has_payment'])): ?>
-                                                                    <a href="/dashboard/customer/invoice?id=<?= $item['payment_id'] ?>"
-                                                                       class="inline-flex items-center mt-2 text-sm text-blue-600 hover:text-blue-700">
-                                                                        Invoice <i data-lucide="file-text"
-                                                                                   class="w-4 h-4 ml-1"></i>
-                                                                    </a>
-                                                                <?php endif; ?>
-                                                            </div>
-                                                        </div>
-                                                    </li>
-                                                <?php endforeach; ?>
-                                            </ul>
+                                                <?php if (empty($item['has_payment'])): ?>
+                                                    <a href="/dashboard/customer/payment?id=<?= $item['id'] ?>"
+                                                       class="inline-flex items-center mt-2 px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">
+                                                        Bayar <i data-lucide="credit-card"
+                                                                 class="w-4 h-4 ml-1"></i>
+                                                    </a>
+                                                <?php elseif (!empty($item['has_payment'])): ?>
+                                                    <a href="/dashboard/customer/invoice?id=<?= $item['id'] ?>"
+                                                       class="inline-flex items-center mt-2 text-sm text-blue-600 hover:text-blue-700">
+                                                        Invoice <i data-lucide="file-text"
+                                                                   class="w-4 h-4 ml-1"></i>
+                                                    </a>
+                                                <?php endif; ?>
+                                            </div>
                                         </div>
-                                    </div>
-                                <?php endif; ?>
+                                    </li>
+                                <?php endforeach; ?>
                             </ul>
                         </div>
                     </div>

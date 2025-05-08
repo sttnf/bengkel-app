@@ -64,4 +64,9 @@ class Database
     {
         return $this->query($sql, $params)->fetchAll();
     }
+
+    public function lastInsertId(?string $name = null): string
+    {
+        return $this->connection->lastInsertId($name);
+    }
 }

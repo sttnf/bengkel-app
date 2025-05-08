@@ -15,12 +15,12 @@
                 ['id' => 'vehicle_model', 'label' => 'Model Kendaraan', 'placeholder' => 'Contoh: Avanza'],
                 ['id' => 'vehicle_year', 'label' => 'Tahun Kendaraan', 'placeholder' => 'Contoh: 2020', 'type' => 'number'],
                 ['id' => 'plate_number', 'label' => 'Nomor Plat', 'placeholder' => 'Contoh: B 1234 CD'],
-                ['id' => 'vehicle_vin', 'label' => 'Nomor Rangka (VIN)', 'placeholder' => 'Contoh: 1HGCM82633A123456'],
+                ['id' => 'vehicle_vin', 'label' => 'Nomor Rangka (VIN)', 'placeholder' => 'Contoh: 1HGCM82633A123456', 'required' => false],
                 ['id' => 'vehicle_color', 'label' => 'Warna Kendaraan', 'placeholder' => 'Contoh: Hitam'],
             ];
 
             foreach ($vehicleFields as $field): ?>
-                <div>
+                <div class="mb-4">
                     <label for="<?= $field['id'] ?>" class="block text-sm font-medium text-gray-700 mb-2">
                         <?= $field['label'] ?>
                     </label>
@@ -35,7 +35,8 @@
                 </div>
             <?php endforeach; ?>
 
-            <div>
+            <!-- Notes Section -->
+            <div class="mb-4">
                 <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">Catatan Tambahan</label>
                 <textarea
                         id="notes"

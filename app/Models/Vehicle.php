@@ -24,4 +24,17 @@ class Vehicle extends Model
         )->fetchAll();
     }
 
+    public function getVehicleById(int $vehicleId): array
+    {
+        return $this->db->query(
+            "SELECT cv.*, 
+                    v.brand, 
+                    v.model 
+             FROM {$this->table} cv
+             JOIN vehicles v ON cv.vehicle_id = v.id
+             WHERE cv.id = :vehicle_id",
+            ['vehicle_id' => $vehicleId]
+        )->fetch();
+    }
+
 }

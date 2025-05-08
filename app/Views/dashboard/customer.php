@@ -35,7 +35,7 @@ ob_start();
                                                 | <?= htmlspecialchars($vehicle['license_plate']) ?></p>
                                         </div>
                                         <div class="flex flex-shrink-0 ml-2 space-x-1">
-                                            <a href="/servis/baru?vehicle_id=<?= $vehicle['id'] ?>"
+                                            <a href="/service?vehicle_id=<?= $vehicle['id'] ?>"
                                                class="inline-flex items-center px-2 py-1 font-medium text-blue-600 bg-blue-100 rounded-lg hover:bg-blue-200 text-xs">
                                                 <i data-lucide="wrench" class="w-4 h-4 mr-1"></i>
                                             </a>

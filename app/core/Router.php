@@ -81,21 +81,35 @@ class Router
         if (is_callable($callback)) {
             return call_user_func_array($callback, $params);
         }
+
         if (is_array($callback)) {
             if (is_string($callback[0]) && class_exists($callback[0])) {
                 // If the first element is a string (class name)
-                return call_user_func_array([new $callback[0](), $callback[1]], $params);
+                $controller = new $callback[0]();
+                if (!method_exists($controller, $callback[1])) {
+                    throw new Exception("Method '{$callback[1]}' does not exist in class '{$callback[0]}'");
+                }
+                return call_user_func_array([$controller, $callback[1]], $params);
             } elseif (is_object($callback[0])) {
                 // If the first element is already an object instance
+                if (!method_exists($callback[0], $callback[1])) {
+                    $className = get_class($callback[0]);
+                    throw new Exception("Method '{$callback[1]}' does not exist in class '{$className}'");
+                }
                 return call_user_func_array([$callback[0], $callback[1]], $params);
             }
         }
 
         if (is_string($callback) && str_contains($callback, '@')) {
             [$controllerClass, $method] = explode('@', $callback);
-            if (class_exists($controllerClass) && method_exists($controllerClass, $method)) {
-                return call_user_func_array([new $controllerClass, $method], $params);
+            if (!class_exists($controllerClass)) {
+                throw new Exception("Controller class '{$controllerClass}' not found");
             }
+            $controller = new $controllerClass();
+            if (!method_exists($controller, $method)) {
+                throw new Exception("Method '{$method}' does not exist in controller '{$controllerClass}'");
+            }
+            return call_user_func_array([$controller, $method], $params);
         }
 
         throw new Exception("Invalid route callback: " . print_r($callback, true));
@@ -107,6 +121,9 @@ class Router
         return $this->renderView('404');
     }
 
+    /**
+     * @throws Exception
+     */
     public function renderView(string $view, array $data = [], string $layout = 'main'): string
     {
         extract($data);

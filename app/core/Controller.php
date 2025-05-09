@@ -1,16 +1,18 @@
 <?php
+
 namespace App\Core;
 
 use JetBrains\PhpStorm\NoReturn;
 
-abstract class Controller {
+abstract class Controller
+{
     /**
      * @throws \Exception
      */
-    protected function render($view, $data = []): string
+    protected function render($view, $data = [], $layout = "main"): string
     {
         $router = new Router();
-        return $router->renderView($view, $data);
+        return $router->renderView($view, $data, $layout);
     }
 
     #[NoReturn] protected function redirect(string $url): void

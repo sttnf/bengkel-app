@@ -95,7 +95,8 @@ class DashboardController extends Controller
             exit;
         }
 
-        $assignTechnician = $_POST['assign_mechanic_id'] ?? null;
+
+        $assignTechnician = !empty($_POST['assign_mechanic_id']) ? (int)$_POST['assign_mechanic_id'] : null;
         $status = $_POST['status'] ?? null;
         $requestId = $_POST['id'] ?? null;
 
@@ -105,9 +106,12 @@ class DashboardController extends Controller
             $updates = array_filter([
                 'status' => $status,
                 'technician_id' => $assignTechnician,
-            ]);
+                'completion_datetime' => $status === 'completed' ? date('Y-m-d H:i:s') : null,
+            ], function ($value) {
+                return $value !== null && $value !== '';
+            });
 
-            if ($updates) {
+            if (!empty($updates)) {
                 $serviceModel->update($requestId, $updates);
             }
         }

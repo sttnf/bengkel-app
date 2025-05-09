@@ -244,12 +244,30 @@ class ServiceRequest extends Model
         return $this->db->query($query)->fetchAll();
     }
 
-    function countStatuses(): array
+    public function countStatuses(): array
     {
-        return $this->db->query(
-            "SELECT status, COUNT(*) AS count 
-             FROM {$this->table} 
-             GROUP BY status"
+        // Default status counts
+        $statusCounts = [
+            'completed' => 0,
+            'pending' => 0,
+            'in_progress' => 0,
+            'cancelled' => 0
+        ];
+
+        // Get actual counts from database
+        $results = $this->db->query(
+            "SELECT status, COUNT(*) AS count
+         FROM {$this->table}
+         GROUP BY status"
         )->fetchAll();
+
+        // Update counts for statuses that have records
+        foreach ($results as $result) {
+            if (isset($statusCounts[$result['status']])) {
+                $statusCounts[$result['status']] = (int)$result['count'];
+            }
+        }
+
+        return $statusCounts;
     }
 }

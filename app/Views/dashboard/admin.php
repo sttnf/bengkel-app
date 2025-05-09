@@ -56,7 +56,9 @@ ob_start();
                     <div class="bg-gray-50 rounded-lg p-3 flex items-center justify-between text-sm">
                         <div>
                             <p class="text-gray-500 text-xs"><?= $meta['label'] ?></p>
-                            <h3 class="font-semibold text-gray-800"><?= $statuses[$key] ?? 0 ?></h3>
+                            <h3 class="font-semibold text-gray-800">
+                                <?= $statuses[$key] ?? 0 ?>
+                            </h3>
                         </div>
                         <div class="flex-shrink-0 ml-2">
                             <div class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-<?= $meta['color'] ?>-100 text-<?= $meta['color'] ?>-600">

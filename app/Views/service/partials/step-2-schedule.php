@@ -11,7 +11,8 @@
         <div class="space-y-4">
             <div>
                 <label for="date" class="block text-sm font-medium text-gray-700 mb-2">Tanggal Servis</label>
-                <input type="date" id="date" name="date" value="<?= $formData['date'] ?>"
+                <input type="date" id="date" name="date"
+                       value="<?= $formData['date'] ?? '' ?>"
                        min="<?= date('Y-m-d') ?>"
                        class="block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                        required>

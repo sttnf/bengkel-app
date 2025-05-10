@@ -1,146 +1,144 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) session_start();
 
-// Only start the session if one hasn't been started already
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-// Function to check if a user is logged in (based on your session variable)
 function isLoggedIn(): bool
 {
-    return isset($_SESSION['user_id']); // Replace 'user_id' with your actual session key
+    return isset($_SESSION['user_id']);
 }
 
-// Function to generate the navigation links
-function generateNavLinks(): string
+function currentUser(): array
 {
-    $navLinks = '';
-
-    $navLinks .= '<a href="/#services" class="text-gray-500 hover:text-gray-900">Layanan</a>';
-    $navLinks .= '<a href="/#testimonials" class="text-gray-500 hover:text-gray-900">Testimoni</a>';
-    $navLinks .= '<a href="/#contact" class="text-gray-500 hover:text-gray-900">Kontak</a>';
-    $navLinks .= '<a class="border border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-600 hover:text-white transition-colors" href="/service" data-discover="true">Service</a>';
-
-    if (isLoggedIn()) {
-        $navLinks .= '<a class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors" href="/dashboard" data-discover="true">Dashboard</a>';
-    } else {
-        $navLinks .= '<a class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors" href="/login" data-discover="true">Login</a>';
-    }
-
-    return $navLinks;
+    return $_SESSION['user'] ?? ['name' => 'Tamu'];
 }
 
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
+<?php include_once __DIR__ . '/../../Components/head.php'; ?>
 
-<?php
-$pageTitle = $pageTitle ?? 'Bengkel Kita - Perbaikan Kendaraan Terbaik';
+<body class="bg-white text-gray-800 font-sans">
+<nav class="fixed w-full top-0 z-50 backdrop-blur-md bg-white/80 border-b border-gray-200 shadow-sm"
+     x-data="{ menuOpen: false, userOpen: false }">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
 
-include_once __DIR__ . '/../../Components/head.php';
-?>
+        <!-- Logo -->
+        <a href="/" class="flex items-center gap-2 text-xl font-bold text-primary-600">
+            <svg class="w-7 h-7 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9L2.2 10.8A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"
+                      stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Bengkel Kita</span>
+        </a>
 
-<body class="bg-gray-100 min-h-screen">
-<nav class="sticky top-0 w-full bg-white shadow-sm z-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16"><a class="flex items-center" href="/" data-discover="true">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                     class="lucide lucide-car h-8 w-8 text-blue-600">
-                    <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path>
-                    <circle cx="7" cy="17" r="2"></circle>
-                    <path d="M9 17h6"></path>
-                    <circle cx="17" cy="17" r="2"></circle>
-                </svg>
-                <span class="ml-2 text-xl font-bold text-gray-900">Bengkel Kita</span></a>
-            <div class="flex items-center sm:hidden">
-                <button class="text-gray-500 hover:text-gray-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                         stroke-linejoin="round" class="lucide lucide-menu h-6 w-6">
-                        <line x1="4" x2="20" y1="12" y2="12"></line>
-                        <line x1="4" x2="20" y1="6" y2="6"></line>
-                        <line x1="4" x2="20" y1="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-            <div class="hidden sm:flex sm:items-center sm:space-x-4">
-                <?php echo generateNavLinks(); ?>
-            </div>
+        <!-- Desktop Navigation -->
+        <div class="hidden sm:flex items-center gap-6">
+            <a href="/#services" class="text-gray-700 hover:text-primary-600 transition font-medium">Layanan</a>
+            <a href="/#testimonials" class="text-gray-700 hover:text-primary-600 transition font-medium">Testimoni</a>
+            <a href="/#contact" class="text-gray-700 hover:text-primary-600 transition font-medium">Kontak</a>
+            <a href="/service"
+               class="px-4 py-2 border border-primary-600 text-primary-600 rounded-full hover:bg-primary-50 transition font-medium">Service</a>
+
+            <?php if (isLoggedIn()): ?>
+                <div class="relative" @click.away="userOpen = false">
+                    <button @click="userOpen = !userOpen"
+                            class="flex items-center gap-2 group hover:bg-gray-100 px-3 py-2 rounded-full transition">
+                        <div class="w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center font-bold shadow">
+                            <?= strtoupper(substr(currentUser()['name'], 0, 1)) ?>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700"><?= htmlspecialchars(currentUser()['name']) ?></span>
+                        <svg class="w-4 h-4 text-gray-500 group-hover:text-primary-600" fill="none"
+                             stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M19 9l-7 7-7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <div x-show="userOpen" x-transition x-cloak
+                         class="absolute right-0 mt-2 w-44 bg-white rounded-lg shadow-lg py-2 z-50">
+                        <a href="/dashboard" class="block px-4 py-2 hover:bg-gray-100 text-sm">Dashboard</a>
+                        <form action="/logout" method="POST">
+                            <button type="submit" class="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm">Logout
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            <?php else: ?>
+                <a href="/login"
+                   class="px-4 py-2 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition font-medium">Login</a>
+            <?php endif; ?>
         </div>
+
+        <!-- Mobile Toggle -->
+        <button @click="menuOpen = !menuOpen" class="sm:hidden text-gray-700 hover:text-primary-600 transition">
+            <svg x-show="!menuOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M4 6h16M4 12h16M4 18h16" stroke-width="2"/>
+            </svg>
+            <svg x-show="menuOpen" x-cloak class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M6 18L18 6M6 6l12 12" stroke-width="2"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div x-show="menuOpen" x-transition x-cloak class="sm:hidden px-4 pb-6 pt-2 space-y-3">
+        <a href="/#services" class="block text-gray-700 hover:text-primary-600 font-medium">Layanan</a>
+        <a href="/#testimonials" class="block text-gray-700 hover:text-primary-600 font-medium">Testimoni</a>
+        <a href="/#contact" class="block text-gray-700 hover:text-primary-600 font-medium">Kontak</a>
+        <a href="/service" class="block text-primary-600 font-semibold">Service</a>
+        <?php if (isLoggedIn()): ?>
+            <a href="/dashboard" class="block text-gray-700">Dashboard</a>
+            <form action="/logout.php" method="POST">
+                <button class="block text-left w-full text-gray-700">Logout</button>
+            </form>
+        <?php else: ?>
+            <a href="/login" class="block text-gray-700 font-medium">Login</a>
+        <?php endif; ?>
     </div>
 </nav>
 
-<main class="min-h-screen">
+
+<!-- Content -->
+<main class="min-h-[calc(100vh-160px)] py-10">
     {{content}}
 </main>
 
-<footer class="bg-gray-800">
-    <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-                <div class="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                         stroke-linejoin="round" class="lucide lucide-car h-8 w-8 text-blue-500">
-                        <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path>
-                        <circle cx="7" cy="17" r="2"></circle>
-                        <path d="M9 17h6"></path>
-                        <circle cx="17" cy="17" r="2"></circle>
+<!-- Footer -->
+<footer class="bg-gray-900 text-gray-400 text-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid grid-cols-1 md:grid-cols-4 gap-10">
+        <div>
+            <h2 class="text-white text-lg font-semibold mb-3">Bengkel Kita</h2>
+            <p>Solusi terpercaya untuk perawatan dan perbaikan kendaraan Anda.</p>
+        </div>
+        <div>
+            <h3 class="text-white font-medium mb-3">Layanan</h3>
+            <ul class="space-y-2">
+                <li><a href="#" class="hover:text-white">Tune Up</a></li>
+                <li><a href="#" class="hover:text-white">Servis Rem</a></li>
+                <li><a href="#" class="hover:text-white">Servis AC</a></li>
+                <li><a href="#" class="hover:text-white">Ganti Oli</a></li>
+            </ul>
+        </div>
+        <div>
+            <h3 class="text-white font-medium mb-3">Jam Operasional</h3>
+            <ul class="space-y-2">
+                <li>Senin - Jumat: 08.00 - 17.00</li>
+                <li>Sabtu: 08.00 - 15.00</li>
+                <li>Minggu: Tutup</li>
+            </ul>
+        </div>
+        <div>
+            <h3 class="text-white font-medium mb-3">Ikuti Kami</h3>
+            <div class="flex gap-3">
+                <a href="#" class="hover:text-white">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/>
                     </svg>
-                    <span class="ml-2 text-xl font-bold text-white">Bengkel Kita</span></div>
-                <p class="mt-4 text-gray-400">Solusi terpercaya untuk perawatan kendaraan Anda</p></div>
-            <div><h3 class="text-white font-semibold mb-4">Layanan</h3>
-                <ul class="space-y-2">
-                    <li><a href="#" class="text-gray-400 hover:text-white">Tune Up</a></li>
-                    <li><a href="#" class="text-gray-400 hover:text-white">Servis Rem</a></li>
-                    <li><a href="#" class="text-gray-400 hover:text-white">Servis AC</a></li>
-                    <li><a href="#" class="text-gray-400 hover:text-white">Ganti Oli</a></li>
-                </ul>
-            </div>
-            <div><h3 class="text-white font-semibold mb-4">Jam Operasional</h3>
-                <ul class="space-y-2">
-                    <li class="text-gray-400">Senin - Jumat: 08.00 - 17.00</li>
-                    <li class="text-gray-400">Sabtu: 08.00 - 15.00</li>
-                    <li class="text-gray-400">Minggu: Tutup</li>
-                </ul>
-            </div>
-            <div><h3 class="text-white font-semibold mb-4">Ikuti Kami</h3>
-                <div class="flex space-x-4"><a href="#" class="text-gray-400 hover:text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                             stroke-linejoin="round" class="lucide lucide-facebook h-6 w-6">
-                            <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
-                        </svg>
-                    </a><a href="#" class="text-gray-400 hover:text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                             stroke-linejoin="round" class="lucide lucide-instagram h-6 w-6">
-                            <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
-                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                            <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line>
-                        </svg>
-                    </a><a href="#" class="text-gray-400 hover:text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                             stroke-linejoin="round" class="lucide lucide-twitter h-6 w-6">
-                            <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
-                        </svg>
-                    </a></div>
+                </a>
             </div>
         </div>
-        <div class="mt-8 pt-8 border-t border-gray-700"><p class="text-center text-gray-400">©
-                <?= date('Y') ?>
-                Bengkel Kita. All rights reserved.</p></div>
     </div>
 </footer>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
-    });
-</script>
-</body>
 
+<?php include_once __DIR__ . '/../../Components/toast.php'; ?>
+<?php include_once __DIR__ . '/../../Components/script.php'; ?>
+</body>
 </html>

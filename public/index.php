@@ -33,20 +33,11 @@ $router->get('/service/get-times', [ServiceController::class, 'getAvailableServi
 // Authentication routes
 $router->get('/login', [AuthController::class, 'login']);
 $router->post('/login', [AuthController::class, 'login']);
+
 $router->get('/register', [AuthController::class, 'register']);
 $router->post('/register', [AuthController::class, 'register']);
-$router->get('/logout', [AuthController::class, 'logout']);
 
-// User management routes
-$router->group('/users', function ($router) {
-    $router->get('/', [UserController::class, 'index']);
-    $router->get('/create', [UserController::class, 'create']);
-    $router->post('/', [UserController::class, 'store']);
-    $router->get('/:id', [UserController::class, 'show']);
-    $router->get('/:id/edit', [UserController::class, 'edit']);
-    $router->post('/:id', [UserController::class, 'update']);
-    $router->post('/:id/delete', [UserController::class, 'delete']);
-});
+$router->post('/logout', [AuthController::class, 'logout']);
 
 // Dashboard routes
 $router->group('/dashboard', function ($router) {
@@ -62,6 +53,7 @@ $router->group('/dashboard', function ($router) {
 
     $router->get('/technicians', [DashboardController::class, 'technicians']);
     $router->get('/services', [DashboardController::class, 'services']);
+    $router->post('/services', [DashboardController::class, 'services']);
     $router->get('/analytics', [DashboardController::class, 'analytics']);
 
     $router->group('/customer', function ($router) {

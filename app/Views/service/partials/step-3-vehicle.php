@@ -30,7 +30,7 @@
                             name="<?= $field['id'] ?>"
                             value="<?= htmlspecialchars($formData[$field['id']] ?? '') ?>"
                             placeholder="<?= $field['placeholder'] ?>"
-                            class="block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                            class="block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
                             required>
                 </div>
             <?php endforeach; ?>
@@ -42,7 +42,7 @@
                         id="notes"
                         name="notes"
                         placeholder="Tambahkan catatan khusus tentang kendaraan Anda"
-                        class="block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        class="block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
                         rows="4"><?= htmlspecialchars($formData['notes'] ?? '') ?></textarea>
             </div>
         </div>

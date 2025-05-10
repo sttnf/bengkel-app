@@ -2,106 +2,144 @@
 $pageTitle = "Analytics Dashboard";
 $pageHeader = "Analytics Overview";
 
-// Dummy Summary Stats
-$summaryStats = [
-    ['label' => 'Total Requests', 'value' => 236],
-    ['label' => 'Completed', 'value' => 198],
-    ['label' => 'Pending', 'value' => 24],
-    ['label' => 'In Progress', 'value' => 14],
-];
+$analytics = $analytics ?? [];
 
-// Dummy Revenue Stats
-$revenueStats = [
-    'totalRevenue' => 12750000, // in IDR
-    'avgRevenuePerOrder' => 64419, // 12750000 / 198
-    'highestSingleOrder' => 320000,
-];
-
-// Recent Activities
-$recentActivities = [
-    ['activity' => 'Completed oil change for Toyota Corolla 2020', 'date' => '2025-05-06'],
-    ['activity' => 'New brake inspection request for Honda Jazz 2021', 'date' => '2025-05-05'],
-    ['activity' => 'Battery replaced on Nissan Livina 2018', 'date' => '2025-05-04'],
-    ['activity' => 'Full inspection completed on Toyota Innova 2016', 'date' => '2025-05-03'],
-];
-
-function formatIDR($amount)
+function formatIDR($amount): string
 {
-    return "Rp " . number_format($amount, 0, ',', '.');
+    return 'Rp ' . number_format($amount, 0, ',', '.');
 }
 
-ob_start();
+function getSummaryStats(array $analytics): array
+{
+    return [
+        ['label' => 'Total Requests', 'value' => $analytics['services']['total'] ?? 0, 'icon' => 'clipboard-check'],
+        ['label' => 'Completed', 'value' => $analytics['services']['completed'] ?? 0, 'icon' => 'check-circle'],
+        ['label' => 'Pending', 'value' => $analytics['services']['pending'] ?? 0, 'icon' => 'clock'],
+        ['label' => 'In Progress', 'value' => $analytics['services']['in_progress'] ?? 0, 'icon' => 'cog'],
+    ];
+}
+
+function getRevenueStats(array $analytics): array
+{
+    $totalRevenue = $analytics['revenue']['total'] ?? 0;
+    $completedServices = $analytics['services']['completed'] ?? 0;
+
+    return [
+        'totalRevenue' => $totalRevenue,
+        'avgRevenuePerOrder' => $completedServices > 0 ? $totalRevenue / $completedServices : 0,
+        'highestSingleOrder' => $analytics['revenue']['monthly'][0]['total_revenue'] ?? 0,
+    ];
+}
+
+function getMonthlyRevenueData(array $analytics): array
+{
+    $monthlyData = $analytics['revenue']['monthly'] ?? [];
+    return [
+        'labels' => array_map(fn($item) => date('M Y', strtotime($item['month'])), $monthlyData),
+        'values' => array_map(fn($item) => $item['total_revenue'], $monthlyData),
+    ];
+}
+
+$summaryStats = getSummaryStats($analytics);
+$revenueStats = getRevenueStats($analytics);
+$monthlyRevenueData = getMonthlyRevenueData($analytics);
 ?>
 
-<header>
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 ">
-        <div>
-            <h1 class="text-3xl font-bold tracking-tight text-gray-900"><?= $pageHeader ?></h1>
-            <p class="mt-2 text-sm text-gray-600">
-                Kelola semua data analitik bengkel Anda dengan mudah. Lihat semua statistik, pendapatan, dan aktivitas
-                terbaru.
-            </p>
-        </div>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title><?= $pageTitle ?></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
+</head>
+<body class="bg-gray-50 font-sans text-gray-900">
+<div class="max-w-7xl mx-auto p-6 space-y-6">
+    <header>
+        <h1 class="text-3xl font-bold"><?= $pageHeader ?></h1>
+        <p class="text-sm text-gray-600 mt-1">Kelola data analitik bengkel Anda dengan mudah dan efisien.</p>
+    </header>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <?php foreach ($summaryStats as $stat): ?>
+            <div class="bg-white rounded-2xl border shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition">
+                <div class="text-2xl text-<?= match ($stat['label']) {
+                    'Completed' => 'green-500',
+                    'Pending' => 'yellow-500',
+                    'In Progress' => 'blue-500',
+                    default => 'indigo-500'
+                } ?>">
+                    <i class="fa-solid fa-<?= $stat['icon'] ?>"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500"><?= $stat['label'] ?></h3>
+                    <p class="text-xl font-semibold"><?= $stat['value'] ?></p>
+                </div>
+            </div>
+        <?php endforeach; ?>
     </div>
-</header>
 
-<!-- Summary Cards -->
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4 ">
-    <?php foreach ($summaryStats as $stat): ?>
-        <div class="bg-white border rounded-xl shadow-sm p-4 text-center">
-            <h3 class="text-sm text-gray-500 font-medium"><?= $stat['label'] ?></h3>
-            <p class="text-2xl font-semibold text-blue-600"><?= $stat['value'] ?></p>
+    <section class="bg-white rounded-2xl border shadow-sm p-6">
+        <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-coins text-yellow-500"></i> Ringkasan Pendapatan
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-500 mb-1"><i class="fa-solid fa-sack-dollar text-green-500 mr-1"></i> Total Revenue</p>
+                <p class="text-lg font-semibold text-green-600"><?= formatIDR($revenueStats['totalRevenue']) ?></p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-500 mb-1"><i class="fa-solid fa-calculator text-blue-500 mr-1"></i> Avg per Order</p>
+                <p class="text-lg font-semibold text-green-600"><?= formatIDR($revenueStats['avgRevenuePerOrder']) ?></p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-500 mb-1"><i class="fa-solid fa-arrow-up-right-dots text-indigo-500 mr-1"></i> Highest Order</p>
+                <p class="text-lg font-semibold text-green-600"><?= formatIDR($revenueStats['highestSingleOrder']) ?></p>
+            </div>
         </div>
-    <?php endforeach; ?>
+    </section>
+
+    <section class="bg-white rounded-2xl border shadow-sm p-6">
+        <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-chart-line text-blue-500"></i> Tren Bulanan
+        </h2>
+        <div class="relative h-72">
+            <canvas id="monthlyRevenueChart"></canvas>
+        </div>
+    </section>
 </div>
 
-<!-- Revenue Section -->
-<div class="bg-white rounded-xl shadow-sm border p-4 ">
-    <h2 class="text-lg font-semibold text-gray-700 mb-4">Revenue Summary</h2>
-    <div class="grid md:grid-cols-3 gap-4">
-        <div class="bg-gray-50 p-4 rounded-lg">
-            <p class="text-sm text-gray-500">Total Revenue</p>
-            <p class="text-xl font-semibold text-green-600"><?= formatIDR($revenueStats['totalRevenue']) ?></p>
-        </div>
-        <div class="bg-gray-50 p-4 rounded-lg">
-            <p class="text-sm text-gray-500">Avg per Order</p>
-            <p class="text-xl font-semibold text-green-600"><?= formatIDR($revenueStats['avgRevenuePerOrder']) ?></p>
-        </div>
-        <div class="bg-gray-50 p-4 rounded-lg">
-            <p class="text-sm text-gray-500">Highest Order</p>
-            <p class="text-xl font-semibold text-green-600"><?= formatIDR($revenueStats['highestSingleOrder']) ?></p>
-        </div>
-    </div>
-</div>
-
-<!-- Placeholder for Chart -->
-<div class="bg-white rounded-xl shadow-sm border p-4 ">
-    <h2 class="text-lg font-semibold text-gray-700 mb-4">Monthly Trend</h2>
-    <div class="h-48 flex items-center justify-center bg-gray-100 rounded text-gray-400 text-sm">
-        Chart Placeholder (e.g., Chart.js or image)
-    </div>
-</div>
-
-<!-- Recent Activities -->
-<div class="bg-white rounded-xl shadow-sm border p-4">
-    <h2 class="text-lg font-semibold text-gray-700 mb-4">Recent Activity</h2>
-    <?php if (empty($recentActivities)): ?>
-        <p class="text-sm text-gray-500">No recent activity.</p>
-    <?php else: ?>
-        <ul class="space-y-3">
-            <?php foreach ($recentActivities as $item): ?>
-                <li class="border-l-4 pl-4 py-2 bg-gray-50 rounded border-gray-300">
-                    <div class="flex justify-between">
-                        <p class="text-gray-700 text-sm"><?= $item['activity'] ?></p>
-                        <span class="text-xs text-gray-400"><?= $item['date'] ?></span>
-                    </div>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-    <?php endif; ?>
-</div>
-
-<?php
-$content = ob_get_clean();
-echo $content;
-?>
+<script>
+    new Chart(document.getElementById('monthlyRevenueChart'), {
+        type: 'line',
+        data: {
+            labels: <?= json_encode($monthlyRevenueData['labels']) ?>,
+            datasets: [{
+                label: 'Pendapatan Bulanan (Rp)',
+                data: <?= json_encode($monthlyRevenueData['values']) ?>,
+                fill: true,
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.3,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                pointBackgroundColor: 'rgb(59, 130, 246)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: value => 'Rp ' + value.toLocaleString('id-ID') }
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>

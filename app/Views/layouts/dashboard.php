@@ -20,29 +20,32 @@ function isActive(string $link, string $current): bool
 }
 
 ?>
-<body class="bg-gray-50 font-sans">
+
+<body class="bg-gray-100 font-sans text-gray-900">
 <div x-data="{ sidebarOpen: false }" class="flex h-screen overflow-hidden">
 
-    <div x-show="sidebarOpen" @click="sidebarOpen = false" @keydown.escape.window="sidebarOpen = false"
-         class="fixed inset-0 bg-gray-600 bg-opacity-50 z-30 md:hidden transition-opacity duration-300" x-cloak></div>
+    <!-- Overlay -->
+    <div x-show="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-black/40 z-30 md:hidden"
+         x-cloak></div>
 
+    <!-- Sidebar -->
     <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-           class="fixed inset-y-0 left-0 z-40 w-64 bg-white border-r shadow-sm transform md:translate-x-0 md:static md:inset-0 transition-transform duration-300 ease-in-out">
-        <div class="flex items-center justify-between h-16 border-b px-6">
-                        <span class="text-lg font-semibold text-primary-700 flex items-center gap-2">
-                            <i data-lucide="car" class="w-6 h-6"></i>
-                            Bengkel Kita
-                        </span>
-            <button @click="sidebarOpen = false" class="text-gray-500 hover:text-gray-700 md:hidden">
+           class="fixed z-40 inset-y-0 left-0 w-64 bg-white border-r shadow-lg transform transition-transform duration-300 md:translate-x-0 md:static">
+        <div class="flex items-center justify-between h-16 px-6 border-b">
+            <span class="text-xl font-bold text-primary-700 flex items-center gap-2">
+                <i data-lucide="car" class="w-6 h-6"></i> Bengkel Kita
+            </span>
+            <button @click="sidebarOpen = false" class="md:hidden text-gray-500 hover:text-gray-700">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
 
-        <nav class="px-4 py-6 space-y-2">
+        <nav class="flex flex-col gap-2 px-4 py-6">
             <?php foreach ($menu as $item): ?>
                 <?php $active = isActive($item['link'], $currentPath); ?>
-                <a href="<?= $item['link'] ?>" @click="window.innerWidth < 768 && (sidebarOpen = false)"
-                   class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg <?= $active ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-primary-100 hover:text-primary-700' ?>">
+                <a href="<?= $item['link'] ?>" @click="sidebarOpen = false"
+                   class="flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-xl transition
+                   <?= $active ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100 hover:text-primary-600' ?>">
                     <i data-lucide="<?= $item['icon'] ?>" class="w-5 h-5"></i>
                     <?= $item['label'] ?>
                 </a>
@@ -50,30 +53,39 @@ function isActive(string $link, string $current): bool
         </nav>
     </aside>
 
-    <div class="flex flex-col flex-1 w-0">
-        <header class="flex items-center justify-between h-16 bg-white border-b p-6">
+    <!-- Main content -->
+    <div class="flex-1 flex flex-col">
+        <!-- Top Bar -->
+        <header class="flex items-center justify-between px-6 h-16 bg-white border-b shadow-sm md:justify-end">
             <button @click="sidebarOpen = !sidebarOpen" class="text-gray-600 md:hidden">
                 <i data-lucide="menu" class="w-6 h-6"></i>
             </button>
-            <div x-data="{ dropdownOpen: false }" class="relative">
-                <button @click="dropdownOpen = !dropdownOpen"
-                        class="flex items-center gap-2 text-gray-700 hover:text-primary-600">
-                    <span><?= $_SESSION['user_name'] ?? 'User' ?></span>
-                    <i data-lucide="user-circle" class="w-6 h-6"></i>
+
+            <div x-data="{ open: false }" class="relative">
+                <button @click="open = !open"
+                        class="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-primary-600">
+                    <span><?= $_SESSION['user']["name"] ?? 'User' ?></span>
+                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
                 </button>
-                <div x-show="dropdownOpen" @click.away="dropdownOpen = false" x-transition x-cloak
-                     class="absolute right-0 mt-2 w-48 bg-white border rounded-md shadow-lg py-1 z-50">
-                    <a href="profile.php" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
-                    <a href="settings.php" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
-                    <a href="logout.php" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+
+                <div x-show="open" @click.away="open = false" x-transition x-cloak
+                     class="absolute right-0 w-48 h-fit bg-white border rounded-lg shadow-md z-50 py-1">
+                    <form action="/logout" method="POST" class="h">
+                        <button type="submit"
+                                class="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <i data-lucide="log-out" class="w-4 h-4 mr-2"></i>
+                            Logout
+                        </button>
+                    </form>
                 </div>
             </div>
         </header>
 
-        <main class="flex-1 space-y-6 overflow-y-auto bg-gray-100 py-8 px-4 sm:px-6 lg:px-8 font-sans antialiased text-gray-900">
+        <!-- Content Area -->
+        <main class="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
             <?php if (isset($pageHeader)): ?>
-                <div class="flex items-center justify-between ">
-                    <h1 class="text-2xl font-semibold text-gray-900"><?= $pageHeader ?></h1>
+                <div class="flex items-center justify-between mb-6">
+                    <h1 class="text-2xl font-semibold"><?= $pageHeader ?></h1>
                     <?= $headerButton ?? '' ?>
                 </div>
             <?php endif; ?>
@@ -82,7 +94,8 @@ function isActive(string $link, string $current): bool
     </div>
 </div>
 
-<script>
-    lucide.createIcons();
-</script>
+<?php
+include_once __DIR__ . '/../../Components/toast.php';
+require_once __DIR__ . '/../../Components/script.php';
+?>
 </body>

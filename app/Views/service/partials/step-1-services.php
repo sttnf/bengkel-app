@@ -8,7 +8,7 @@
                     $isSelected = isset($formData) && isset($formData['service_type']) && $formData['service_type'] === $service['name'];
                     ?>
                     <label class="service-option p-4 border rounded-lg cursor-pointer transition-all
-                                                                                    <?= $isSelected ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-blue-200' ?>">
+                                                                                    <?= $isSelected ? 'border-primary-600 bg-primary-50' : 'border-gray-200 hover:border-primary-200' ?>">
                         <div class="flex items-start justify-between">
                             <div>
                                 <h3 class="font-medium text-gray-900"><?= $service['name'] ?></h3>
@@ -33,7 +33,7 @@
                                                                                                     </svg>
                                                                                                     <?= number_format((float)$service["estimated_hours"], 1, ',', '.') ?> jam
                                                                                                 </span>
-                                    <span class="font-medium text-blue-600">Rp <?= number_format((int)$service["base_price"], 0, ',', '.') ?></span>
+                                    <span class="font-medium text-primary-600">Rp <?= number_format((int)$service["base_price"], 0, ',', '.') ?></span>
                                 </div>
                             </div>
                             <div class="flex items-center h-5">
@@ -41,7 +41,7 @@
                                        data-id="<?= $service['id'] ?>"
                                        data-price="<?= $service["base_price"] ?>"
                                        data-duration="<?= $service["estimated_hours"] ?>" <?= $isSelected ? 'checked' : '' ?>
-                                       class="w-5 h-5 text-blue-600 rounded-full border-gray-300">
+                                       class="w-5 h-5 text-primary-600 rounded-full border-gray-300">
                             </div>
                         </div>
                     </label>

@@ -109,7 +109,7 @@ $formData = $_SESSION['form_data'];
             <div class="absolute left-0 right-0 top-1/2 transform -translate-y-1/2 h-0.5 bg-gray-200"></div>
             <?php for ($i = 1; $i <= 4; $i++): ?>
                 <div class="relative flex items-center justify-center w-10 h-10 rounded-full
-                    <?= $i === 1 ? 'bg-blue-600 text-white' : 'bg-white text-gray-400 border-2 border-gray-200' ?>"
+                    <?= $i === 1 ? 'bg-primary-600 text-white' : 'bg-white text-gray-400 border-2 border-gray-200' ?>"
                      id="step-indicator-<?= $i ?>">
                     <span class="text-sm font-medium"><?= $i ?></span>
                 </div>
@@ -138,7 +138,7 @@ $formData = $_SESSION['form_data'];
                                 $is_selected = $formData['service_type'] == $service['name'];
                                 ?>
                                 <label class="service-option p-4 border rounded-lg cursor-pointer transition-all
-                                <?= $is_selected ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-blue-200' ?>">
+                                <?= $is_selected ? 'border-primary-600 bg-primary-50' : 'border-gray-200 hover:border-primary-200' ?>">
                                     <div class="flex items-start justify-between">
                                         <div>
                                             <h3 class="font-medium text-gray-900"><?= $service['name'] ?></h3>
@@ -154,7 +154,7 @@ $formData = $_SESSION['form_data'];
                                                 </svg>
                                                 <?= $service['duration'] ?>
                                             </span>
-                                                <span class="font-medium text-blue-600"><?= $service['price'] ?></span>
+                                                <span class="font-medium text-primary-600"><?= $service['price'] ?></span>
                                             </div>
                                         </div>
                                         <div class="flex items-center h-5">
@@ -162,7 +162,7 @@ $formData = $_SESSION['form_data'];
                                                    data-id="<?= $service['id'] ?>"
                                                    data-price="<?= $price_value ?>"
                                                    data-duration="<?= $duration_value ?>" <?= $is_selected ? 'checked' : '' ?>
-                                                   class="w-5 h-5 text-blue-600 rounded-full border-gray-300">
+                                                   class="w-5 h-5 text-primary-600 rounded-full border-gray-300">
                                         </div>
                                     </div>
                                 </label>
@@ -171,7 +171,7 @@ $formData = $_SESSION['form_data'];
                     </div>
                     <div class="mt-8 flex justify-end">
                         <button type="button"
-                                class="next-step px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                                class="next-step px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                                 disabled>
                             Lanjut
                             <svg class="lucide lucide-chevron-right h-5 w-5 ml-2" xmlns="http://www.w3.org/2000/svg"
@@ -196,7 +196,7 @@ $formData = $_SESSION['form_data'];
                                 Servis</label>
                             <input type="date" id="date" name="date" value="<?= $formData['date'] ?>"
                                    min="<?= date('Y-m-d') ?>"
-                                   class="block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                   class="block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
                                    required>
                         </div>
 
@@ -210,7 +210,7 @@ $formData = $_SESSION['form_data'];
                                         $is_selected = $formData['time'] == $slot['time'];
                                         ?>
                                         <label class="time-slot px-4 py-3 border rounded-lg flex items-center justify-center cursor-pointer
-                                            <?= $is_selected ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-blue-200' ?>">
+                                            <?= $is_selected ? 'border-primary-600 bg-primary-50' : 'border-gray-200 hover:border-primary-200' ?>">
                                             <input type="radio" name="time"
                                                    value="<?= $slot['time'] ?>" <?= $is_selected ? 'checked' : '' ?>
                                                    class="sr-only">
@@ -236,7 +236,7 @@ $formData = $_SESSION['form_data'];
                         Kembali
                     </button>
                     <button type="button"
-                            class="next-step flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                            class="next-step flex items-center px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary700 disabled:opacity-50 disabled:cursor-not-allowed">
                         Lanjut
                         <svg class="lucide lucide-chevron-right h-5 w-5 ml-2" xmlns="http://www.w3.org/2000/svg"
                              width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -268,7 +268,7 @@ $formData = $_SESSION['form_data'];
                                 <input type="text" id="<?= $field['id'] ?>" name="<?= $field['id'] ?>"
                                        value="<?= htmlspecialchars($formData[$field['id']]) ?>"
                                        placeholder="<?= $field['placeholder'] ?>"
-                                       class="block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                       class="block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
                                        required>
                             </div>
                         <?php endforeach; ?>
@@ -278,7 +278,7 @@ $formData = $_SESSION['form_data'];
                                 Tambahan</label>
                             <textarea id="notes" name="notes"
                                       placeholder="Tambahkan catatan khusus tentang kendaraan Anda"
-                                      class="block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                      class="block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
                                       rows="4"><?= htmlspecialchars($formData['notes']) ?></textarea>
                         </div>
                     </div>
@@ -294,7 +294,7 @@ $formData = $_SESSION['form_data'];
                         Kembali
                     </button>
                     <button type="button"
-                            class="next-step flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            class="next-step flex items-center px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary700">
                         Lanjut
                         <svg class="lucide lucide-chevron-right h-5 w-5 ml-2" xmlns="http://www.w3.org/2000/svg"
                              width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -370,7 +370,7 @@ $formData = $_SESSION['form_data'];
                         Kembali
                     </button>
                     <button type="submit" name="submit_booking"
-                            class="flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            class="flex items-center px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary700">
                         <svg class="lucide lucide-check h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" width="24"
                              height="24" viewBox="0 0 24 24" fill="none"
                              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

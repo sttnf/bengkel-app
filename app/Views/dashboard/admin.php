@@ -32,18 +32,18 @@ $quickActions = [
     ['link' => 'new-service-request.php', 'icon' => 'circle-plus', 'label' => 'New Request', 'color' => 'blue'],
     ['link' => 'new-customers.php', 'icon' => 'user-plus', 'label' => 'New Customer', 'color' => 'green'],
     ['link' => 'inventory-add.php', 'icon' => 'package-plus', 'label' => 'Add Inventory', 'color' => 'violet'],
-    ['link' => 'reports.php', 'icon' => 'chart-candlestick', 'label' => 'View Reports', 'color' => 'indigo']
+    ['link' => 'reports.php', 'icon' => 'chart-candlestick', 'label' => 'View Reports', 'color' => 'primary']
 ];
 
 ob_start();
 ?>
 
 
-<header >
+<header>
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 ">
         <div>
             <h1 class="text-3xl font-bold tracking-tight text-gray-900"><?= $pageHeader ?></h1>
-            <p class="text-gray-500">Selamat datang kembali, <?= $_SESSION['user_name'] ?? 'User' ?> 👋</p>
+            <p class="text-gray-500">Selamat datang kembali, <?= $_SESSION['user']["name"] ?? 'User' ?> 👋</p>
         </div>
     </div>
 </header>
@@ -106,7 +106,7 @@ ob_start();
                     <i data-lucide="list" class="w-5 h-5 mr-2 inline-block"></i>
                     Permintaan Servis Terbaru
                 </h3>
-                <a href="/dashboard/service-requests" class="text-blue-600 hover:underline text-sm">Lihat Semua</a>
+                <a href="/dashboard/service-requests" class="text-primary-600 hover:underline text-sm">Lihat Semua</a>
             </div>
             <ul class="divide-y divide-gray-200">
                 <?php foreach ($recent_requests as $request): ?>
@@ -132,7 +132,7 @@ ob_start();
                                     : '<p class="text-xs text-gray-600">Dijadwalkan: ' . htmlspecialchars($request['scheduled_datetime']) . '</p>';
                                 ?>
                                 <a href="recentRequests-details.php?id=<?= $request['id'] ?>"
-                                   class="inline-flex items-center px-3 py-2 text-xs font-medium text-blue-600 bg-blue-100 rounded-full hover:bg-blue-200">
+                                   class="inline-flex items-center px-3 py-2 text-xs font-medium text-primary-600 bg-primary-100 rounded-full hover:bg-primary-200">
                                     Lihat Detail
                                     <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i>
                                 </a>
@@ -154,7 +154,7 @@ ob_start();
                     <i data-lucide="package" class="w-5 h-5 mr-2 inline-block"></i>
                     Stok Rendah
                 </h3>
-                <a href="/dashboard/inventory" class="text-blue-600 hover:underline text-sm">Lihat Semua</a>
+                <a href="/dashboard/inventory" class="text-primary-600 hover:underline text-sm">Lihat Semua</a>
             </div>
             <ul class="divide-y divide-gray-200">
                 <?php foreach ($lowStockItems as $item): ?>
@@ -172,7 +172,7 @@ ob_start();
                             </div>
                             <div class="ml-2 flex-shrink-0">
                                 <a href="inventory-details.php?id=<?= $item['id'] ?>"
-                                   class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-100 rounded-full hover:bg-blue-200">
+                                   class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-primary-600 bg-primary-100 rounded-full hover:bg-primary-200">
                                     Lihat Detail
                                     <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i>
                                 </a>

@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
         stepIndicators.forEach((indicator, idx) => {
             const isCompleted = idx + 1 < step;
             const isCurrent = idx + 1 === step;
-            indicator.className = `relative flex items-center justify-center w-10 h-10 rounded-full ${isCompleted || isCurrent ? 'bg-blue-600 text-white' : 'bg-white text-gray-400 border-2 border-gray-200'}`;
+            indicator.className = `relative flex items-center justify-center w-10 h-10 rounded-full ${isCompleted || isCurrent ? 'bg-primary-600 text-white' : 'bg-white text-gray-400 border-2 border-gray-200'}`;
         });
         document.getElementById(`step-${step}`).classList.remove('hidden');
         currentStep = step;
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const time = slot.time.substring(0, 5);
             const isSelected = previouslySelectedTime === slot.time;
             const label = document.createElement('label');
-            label.className = `time-slot px-4 py-3 border rounded-lg flex items-center justify-center cursor-pointer ${isSelected ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-blue-200'}`;
+            label.className = `time-slot px-4 py-3 border rounded-lg flex items-center justify-center cursor-pointer ${isSelected ? 'border-primary-600 bg-primary50' : 'border-gray-200 hover:border-primary200'}`;
             label.innerHTML = `
                     <input type="radio" name="time" value="${slot.time}" ${isSelected ? 'checked' : ''} class="sr-only">
                     <span>${time}</span>
@@ -130,8 +130,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         document.querySelectorAll('.time-slot input[type="radio"]').forEach(slot => {
             slot.addEventListener('change', () => {
-                document.querySelectorAll('.time-slot').forEach(card => card.className = 'time-slot px-4 py-3 border rounded-lg flex items-center justify-center cursor-pointer border-gray-200 hover:border-blue-200');
-                slot.closest('.time-slot').className = 'time-slot px-4 py-3 border rounded-lg flex items-center justify-center cursor-pointer border-blue-600 bg-blue-50';
+                document.querySelectorAll('.time-slot').forEach(card => card.className = 'time-slot px-4 py-3 border rounded-lg flex items-center justify-center cursor-pointer border-gray-200 hover:border-primary200');
+                slot.closest('.time-slot').className = 'time-slot px-4 py-3 border rounded-lg flex items-center justify-center cursor-pointer border-primary-600 bg-primary50';
                 if (nextButtons[1]) nextButtons[1].disabled = false;
             });
         });
@@ -148,8 +148,8 @@ document.addEventListener('DOMContentLoaded', () => {
         serviceIdInput.value = this.dataset.id;
         servicePriceInput.value = this.dataset.price;
         serviceDurationInput.value = this.dataset.duration;
-        document.querySelectorAll('.service-option').forEach(card => card.className = 'service-option p-4 border rounded-lg cursor-pointer transition-all border-gray-200 hover:border-blue-200');
-        this.closest('.service-option').className = 'service-option p-4 border rounded-lg cursor-pointer transition-all border-blue-600 bg-blue-50';
+        document.querySelectorAll('.service-option').forEach(card => card.className = 'service-option p-4 border rounded-lg cursor-pointer transition-all border-gray-200 hover:border-primary200');
+        this.closest('.service-option').className = 'service-option p-4 border rounded-lg cursor-pointer transition-all border-primary-600 bg-primary50';
         fetchTimeSlots();
     }));
 

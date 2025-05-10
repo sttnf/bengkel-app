@@ -41,7 +41,7 @@ $quickActions = [
     ['link' => 'new-service-request.php', 'icon' => 'circle-plus', 'label' => 'New Request', 'color' => 'blue'],
     ['link' => 'new-customers.php', 'icon' => 'user-plus', 'label' => 'New Customer', 'color' => 'green'],
     ['link' => 'inventory-add.php', 'icon' => 'package-plus', 'label' => 'Add Inventory', 'color' => 'violet'],
-    ['link' => 'reports.php', 'icon' => 'chart-candlestick', 'label' => 'View Reports', 'color' => 'indigo']
+    ['link' => 'reports.php', 'icon' => 'chart-candlestick', 'label' => 'View Reports', 'color' => 'primary']
 ];
 
 ob_start();
@@ -67,7 +67,7 @@ ob_start();
     <div class="rounded-2xl bg-white shadow-sm border">
         <div class="flex items-center justify-between px-4 py-3 border-b">
             <h2 class="text-base font-semibold text-gray-700">Recent Service Requests</h2>
-            <a href="service-requests.php" class="text-sm text-blue-600 hover:underline">View All</a>
+            <a href="service-requests.php" class="text-sm text-primary-600 hover:underline">View All</a>
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full text-sm text-left">
@@ -108,7 +108,7 @@ ob_start();
         </div>
         <div class="p-4 space-y-3">
             <?php foreach ($upcomingServices as $service): ?>
-                <div class="p-3 bg-gray-50 border-l-4 border-blue-500 rounded">
+                <div class="p-3 bg-gray-50 border-l-4 border-primary-500 rounded">
                     <div class="flex justify-between text-sm">
                         <div class="text-gray-800 font-medium">
                             <?= $service['time'] ?> - <?= $service['service'] ?>
@@ -129,7 +129,7 @@ ob_start();
     <div class="rounded-2xl bg-white shadow-sm border">
         <div class="flex items-center justify-between px-4 py-3 border-b">
             <h2 class="text-base font-semibold text-gray-700">Low Stock Items</h2>
-            <a href="inventory.php" class="text-sm text-blue-600 hover:underline">View Inventory</a>
+            <a href="inventory.php" class="text-sm text-primary-600 hover:underline">View Inventory</a>
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full text-sm text-left">
@@ -153,7 +153,7 @@ ob_start();
                         <td class="px-4 py-2"><?= $item['reorder_level'] ?></td>
                         <td class="px-4 py-2">
                             <a href="inventory-order.php?id=<?= $item['id'] ?>"
-                               class="text-blue-600 hover:underline text-sm">Reorder</a>
+                               class="text-primary-600 hover:underline text-sm">Reorder</a>
                         </td>
                     </tr>
                 <?php endforeach; ?>

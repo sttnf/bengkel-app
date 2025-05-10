@@ -4,6 +4,20 @@ $pageHeader = "Inventory Items";
 
 $categories = ['Pelumas', 'Filter', 'Rem', 'Aki/Battery', 'Ignition', 'Body Parts', 'Suspension', 'Electrical', 'Lainnya'];
 $inventoryItems = $inventory_items ?? [];
+
+$pagination = $pagination ?? [];
+$limit = $pagination['limit'] ?? 10;
+$page = $pagination['page'] ?? 1;
+$totalServices = $pagination['total'] ?? count($inventoryItems);
+$totalPages = $pagination['page_count'] ?? ceil($totalServices / $limit);
+$offset = ($page - 1) * $limit;
+
+$filterStatus = [
+    'available' => 'Tersedia',
+    'low_stock' => 'Stok Rendah',
+    'out_of_stock' => 'Habis',
+];
+
 ?>
 
 <div x-data="{ openModal: false, editItem: {} }">
@@ -22,91 +36,278 @@ $inventoryItems = $inventory_items ?? [];
     </header>
 
     <!-- Filters -->
-    <form class="bg-white p-4 rounded-lg shadow-sm border mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <input type="text" placeholder="Cari nama / part number" class="px-3 py-2 border rounded text-sm">
-        <select class="px-3 py-2 border rounded text-sm">
-            <option value="">Semua Kategori</option>
+    <form method="GET"
+          class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+        <div class="relative">
+            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </div>
+            <input type="text" name="search" placeholder="Search by name / part number"
+                   value="<?= htmlspecialchars($_GET['search'] ?? '') ?>"
+                   class="pl-10 w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-200">
+        </div>
+
+        <select name="category"
+                class="px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-200 appearance-none bg-no-repeat bg-right">
+            <option value="">Semua Ketegori</option>
             <?php foreach ($categories as $c): ?>
-                <option value="<?= $c ?>"><?= $c ?></option>
+                <option value="<?= $c ?>" <?= isset($_GET['category']) && $_GET['category'] === $c ? 'selected' : '' ?>><?= $c ?></option>
             <?php endforeach; ?>
         </select>
-        <select class="px-3 py-2 border rounded text-sm">
+
+        <select name="status"
+                class="px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-200 appearance-none bg-no-repeat bg-right">
             <option value="">Semua Status</option>
-            <option value="available">Tersedia</option>
-            <option value="low_stock">Stok Rendah</option>
-            <option value="out_of_stock">Habis</option>
+            <?php foreach ($filterStatus as $key => $status): ?>
+                <option value="<?= $key ?>" <?= isset($_GET['status']) && $_GET['status'] === $key ? 'selected' : '' ?>><?= $status ?></option>
+            <?php endforeach; ?>
         </select>
-        <button type="submit"
-                class="bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded text-sm flex items-center justify-center">
-            <i data-lucide="filter" class="w-4 h-4 mr-1"></i> Filter
-        </button>
+
+        <input type="hidden" name="page" value="1">
+        <input type="hidden" name="limit" value="<?= $limit ?>">
+
+        <div class="flex gap-2">
+            <button type="submit"
+                    class="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2.5 rounded-lg text-sm flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+                Filter
+            </button>
+
+            <?php if (isset($_GET['search']) || isset($_GET['category']) || isset($_GET['est_time'])): ?>
+                <a href="?"
+                   class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-4 py-2.5 rounded-lg text-sm flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    Reset
+                </a>
+            <?php endif; ?>
+        </div>
     </form>
 
     <!-- Inventory Table -->
-    <div class="bg-white rounded-lg shadow-sm border overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50 text-xs font-medium text-gray-500 uppercase">
-            <tr>
-                <th class="px-4 py-3 text-left">Part No</th>
-                <th class="px-4 py-3 text-left">Nama</th>
-                <th class="px-4 py-3 text-left">Kategori</th>
-                <th class="px-4 py-3 text-left">Stok</th>
-                <th class="px-4 py-3 text-left">Harga</th>
-                <th class="px-4 py-3 text-left">Status</th>
-                <th class="px-4 py-3 text-left">Aksi</th>
-            </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 bg-white text-sm">
-            <?php foreach ($inventoryItems as $item): ?>
-                <tr class="hover:bg-gray-50">
-                    <td class="px-4 py-3 font-mono text-gray-600"><?= $item['part_number'] ?></td>
-                    <td class="px-4 py-3">
-                        <div class="font-medium text-gray-900"><?= $item['name'] ?></div>
-                        <div class="text-xs text-gray-500"><?= $item['supplier'] ?></div>
-                    </td>
-                    <td class="px-4 py-3 text-gray-500"><?= $item['category'] ?></td>
-                    <td class="px-4 py-3 text-gray-500"><?= $item['current_stock'] ?> <?= $item['unit'] ?></td>
-                    <td class="px-4 py-3 text-gray-500">Rp <?= number_format($item['unit_price'], 0, ',', '.') ?></td>
-                    <td class="px-4 py-3">
-                                                       <span class="px-2 py-1 text-xs font-medium rounded-full
-                                                           <?= match (true) {
-                                                           $item['current_stock'] <= 0 => 'bg-red-100 text-red-800',
-                                                           $item['current_stock'] <= $item['reorder_level'] => 'bg-yellow-100 text-yellow-800',
-                                                           default => 'bg-green-100 text-green-800',
-                                                       } ?>">
-                                                           <?= match (true) {
-                                                               $item['current_stock'] <= 0 => 'Out of Stock',
-                                                               $item['current_stock'] <= $item['reorder_level'] => 'Low Stock',
-                                                               default => 'Available',
-                                                           } ?>
-                                                       </span>
-                    </td>
-                    <td class="px-4 py-3 flex items-center justify-center">
-                        <!-- Edit button -->
-                        <button @click="editItem = <?= json_encode($item, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>; openModal = true"
-                                title="Edit item"
-                                class="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50">
-                            <i data-lucide="edit" class="w-4 h-4"></i>
-                        </button>
-
-                        <!-- Delete form -->
-                        <form method="POST"
-                              class="inline-block"
-                              onsubmit="return confirm('Are you sure you want to delete this item?')">
-                            <input type="hidden" name="action" value="delete">
-                            <input type="hidden" name="id" value="<?= $item['id'] ?>">
-                            <button type="submit"
-                                    title="Delete item"
-                                    class="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
-                        </form>
-                    </td>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <!-- Responsive table container -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                <tr class="bg-gray-50">
+                    <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        ID
+                    </th>
+                    <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Nama Barang
+                    </th>
+                    <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                        Kategori
+                    </th>
+                    <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                        Harga
+                    </th>
+                    <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                        Status
+                    </th>
+                    <th class="px-4 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Aksi
+                    </th>
                 </tr>
-            <?php endforeach; ?>
-            </tbody>
-        </table>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200 overflow-x-auto">
+                <?php if (empty($inventoryItems)): ?>
+                    <tr>
+                        <td colspan="6" class="px-4 sm:px-6 py-8 text-center text-gray-500">
+                            <div class="flex flex-col items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-gray-300 mb-2"
+                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"
+                                     stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                </svg>
+                                <p class="text-sm font-medium">No items found</p>
+                                <p class="text-xs mt-1">Add new items to get started</p>
+                            </div>
+                        </td>
+                    </tr>
+                <?php else: ?>
+                    <?php foreach ($inventoryItems as $item): ?>
+                        <tr class="hover:bg-gray-50 transition duration-150">
+                            <td class="px-4 sm:px-6 py-3 whitespace-nowrap font-mono text-xs text-gray-500"><?= $item['id'] ?></td>
+                            <td class="px-4 sm:px-6 py-3">
+                                <div class="font-medium text-gray-900 mb-0.5"><?= $item['name'] ?></div>
+                                <div class="text-xs text-gray-500 line-clamp-1"><?= $item['part_number'] ?></div>
+                                <!-- Mobile-only info -->
+                                <div class="sm:hidden mt-1 flex flex-col gap-1">
+                                                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 w-fit">
+                                                                                <?= $item['category'] ?>
+                                                                            </span>
+                                    <span class="text-xs text-gray-700">Rp <?= number_format($item['base_price'], 2, ',', '.') ?></span>
+                                    <span class="text-xs text-gray-700 flex items-center">
+                                                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                     class="w-3 h-3 text-gray-400 mr-1"
+                                                                                     viewBox="0 0 24 24" fill="none"
+                                                                                     stroke="currentColor"
+                                                                                     stroke-width="2"
+                                                                                     stroke-linecap="round"
+                                                                                     stroke-linejoin="round">
+                                                                                    <circle cx="12" cy="12"
+                                                                                            r="10"></circle>
+                                                                                    <polyline
+                                                                                            points="12 6 12 12 16 14"></polyline>
+                                                                                </svg>
+                                                                                <?= $item['estimated_hours'] ?> jam
+                                                                            </span>
+                                </div>
+                            </td>
+                            <td class="px-4 sm:px-6 py-3 text-gray-700 font-medium hidden md:table-cell">
+                                                                           <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                                                                            <?= $item['category'] ?>
+                                                                        </span>
+                            </td>
+                            <td class="px-4 sm:px-6 py-3 hidden md:table-cell">
+                                Rp <?= number_format($item['unit_price'], 2, ',', '.') ?>
+                            </td>
+                            <td class="px-4 sm:px-6 py-3 hidden md:table-cell">
+                                                                               <span class="px-2 py-1 text-xs font-medium rounded-full
+                                                                                                       <?= match (true) {
+                                                                                   $item['current_stock'] <= 0 => 'bg-red-100 text-red-800',
+                                                                                   $item['current_stock'] <= $item['reorder_level'] => 'bg-yellow-100 text-yellow-800',
+                                                                                   default => 'bg-green-100 text-green-800',
+                                                                               } ?>">
+                                                                                                       <?= match (true) {
+                                                                                                           $item['current_stock'] <= 0 => 'Out of Stock',
+                                                                                                           $item['current_stock'] <= $item['reorder_level'] => 'Low Stock',
+                                                                                                           default => 'Available',
+                                                                                                       } ?>
+                                                                                                   </span>
+                            </td>
+                            <td class="px-4 sm:px-6 py-3 text-center">
+                                <div class="flex items-center justify-center space-x-2 sm:space-x-3">
+                                    <button @click="editItem = <?= htmlspecialchars(json_encode($item), ENT_QUOTES, 'UTF-8') ?>; openModal = true"
+                                            title="Edit service"
+                                            class="text-primary-600 hover:text-primary-900 p-1.5 rounded-full hover:bg-primary-50">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
+                                             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                             stroke-linejoin="round">
+                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                        </svg>
+                                    </button>
+                                    <form method="POST"
+                                          onsubmit="return confirm('Are you sure you want to delete this item?')">
+                                        <input type="hidden" name="action" value="delete">
+                                        <input type="hidden" name="id" value="<?= $item['id'] ?>">
+                                        <button type="submit" title="Delete service"
+                                                class="text-red-600 hover:text-red-900 p-1.5 rounded-full hover:bg-red-50">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
+                                                 fill="none" stroke="currentColor" stroke-width="2"
+                                                 stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="bg-white px-4 sm:px-6 py-4 border-t border-gray-200">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="text-sm text-gray-500 text-center md:text-left">
+                    Showing <span class="font-medium"><?= $offset + 1 ?></span> to
+                    <span class="font-medium"><?= min($offset + $limit, $totalServices) ?></span> of
+                    <span class="font-medium"><?= $totalServices ?></span> items
+                </div>
+
+                <div class="flex flex-wrap items-center justify-center gap-1 sm:gap-2">
+                    <!-- First page -->
+                    <a href="?page=1&limit=<?= $limit ?>"
+                       class="<?= ($page <= 1) ? 'pointer-events-none text-gray-400 bg-gray-50' : 'text-gray-700 hover:bg-gray-100' ?> px-2 sm:px-3 py-1.5 text-sm border border-gray-200 rounded flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="11 17 6 12 11 7"></polyline>
+                            <polyline points="18 17 13 12 18 7"></polyline>
+                        </svg>
+                    </a>
+
+                    <!-- Previous page -->
+                    <a href="?page=<?= max(1, $page - 1) ?>&limit=<?= $limit ?>"
+                       class="<?= ($page <= 1) ? 'pointer-events-none text-gray-400 bg-gray-50' : 'text-gray-700 hover:bg-gray-100' ?> px-2 sm:px-3 py-1.5 text-sm border border-gray-200 rounded">
+                        <span class="hidden sm:inline">Previous</span>
+                        <span class="sm:hidden">&lt;</span>
+                    </a>
+
+                    <!-- Page numbers - hide on smallest screens -->
+                    <div class="hidden xs:flex flex-wrap items-center gap-1 sm:gap-2">
+                        <?php
+                        $startPage = max(1, min($page - 1, $totalPages - 2));
+                        $endPage = min($totalPages, $startPage + 2);
+
+                        for ($i = $startPage;
+                             $i <= $endPage;
+                             $i++):
+                            ?>
+                            <a href="?page=<?= $i ?>&limit=<?= $limit ?>"
+                               class="<?= ($i == $page) ? 'bg-primary-100 text-primary-700 border-primary-300 font-medium' : 'text-gray-700 hover:bg-gray-100' ?> px-2.5 sm:px-3.5 py-1.5 text-sm border border-gray-200 rounded">
+                                <?= $i ?>
+                            </a>
+                        <?php endfor; ?>
+                    </div>
+
+                    <!-- Current page indicator for smallest screens -->
+                    <span class="xs:hidden text-sm px-2.5 py-1.5">
+                                                                <?= $page ?> / <?= $totalPages ?>
+                                                            </span>
+
+                    <!-- Next page -->
+                    <a href="?page=<?= min($totalPages, $page + 1) ?>&limit=<?= $limit ?>"
+                       class="<?= ($page >= $totalPages) ? 'pointer-events-none text-gray-400 bg-gray-50' : 'text-gray-700 hover:bg-gray-100' ?> px-2 sm:px-3 py-1.5 text-sm border border-gray-200 rounded">
+                        <span class="hidden sm:inline">Next</span>
+                        <span class="sm:hidden">&gt;</span>
+                    </a>
+
+                    <!-- Last page -->
+                    <a href="?page=<?= $totalPages ?>&limit=<?= $limit ?>"
+                       class="<?= ($page >= $totalPages) ? 'pointer-events-none text-gray-400 bg-gray-50' : 'text-gray-700 hover:bg-gray-100' ?> px-2 sm:px-3 py-1.5 text-sm border border-gray-200 rounded flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="13 17 18 12 13 7"></polyline>
+                            <polyline points="6 17 11 12 6 7"></polyline>
+                        </svg>
+                    </a>
+
+                    <!-- Items per page selector -->
+                    <div class="flex items-center ml-2 pl-2 sm:ml-4 sm:pl-4 border-l border-gray-200">
+                        <span class="text-sm text-gray-500 mr-1 sm:mr-2 hidden xs:inline">Show:</span>
+                        <select onchange="window.location = '?page=1&limit=' + this.value"
+                                class="text-sm border border-gray-200 rounded px-1 sm:px-2 py-1.5 focus:outline-none focus:ring-1">
+                            <?php foreach ([10, 25, 50, 100] as $val): ?>
+                                <option value="<?= $val ?>" <?= $limit == $val ? 'selected' : '' ?>><?= $val ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
 
     <!-- Modal -->
     <div x-show="openModal" x-cloak class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">

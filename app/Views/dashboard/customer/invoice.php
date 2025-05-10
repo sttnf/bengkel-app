@@ -45,7 +45,7 @@ $statusColorClass = match (strtolower($payment['status'])) {
     <div class="max-w-3xl mx-auto">
         <div class="mb-4 text-right no-print">
             <button onclick="window.print()"
-                    class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                    class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
                 <i data-lucide="printer" class="w-4 h-4 inline-block mr-1"></i> Cetak Invoice
             </button>
         </div>

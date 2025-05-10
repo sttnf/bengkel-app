@@ -104,7 +104,7 @@ if ($vehicleId) {
                     <p class="mt-2 text-gray-500">Anda harus login untuk melanjutkan pemesanan.</p>
                     <div class="mt-4 flex justify-center space-x-3">
                         <a href="/login?redirect=<?= urlencode($_SERVER['REQUEST_URI']) ?>"
-                           class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Login</a>
+                           class="px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600">Login</a>
                         <a href="/register"
                            class="px-4 py-2 border border-gray-300 text-gray-600 rounded-md hover:bg-gray-100">Daftar</a>
                     </div>
@@ -147,7 +147,7 @@ if ($vehicleId) {
                             class="prev-step hidden px-4 py-2 border text-gray-600 rounded-md hover:bg-gray-100">Kembali
                     </button>
                     <button type="button" id="nextStepBtn"
-                            class="next-step px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Lanjut
+                            class="next-step px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600">Lanjut
                     </button>
                     <button type="submit" id="submitBtn" name="submit_booking"
                             class="submit-step hidden px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">

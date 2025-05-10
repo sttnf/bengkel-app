@@ -289,4 +289,33 @@ class ServiceRequest extends Model
 
         return $statusCounts;
     }
+
+    public function countByTechnicianAndStatus(int $technicianId, string $status): int
+    {
+        return (int)$this->db->query(
+            "SELECT COUNT(*) AS count
+             FROM {$this->table}
+             WHERE technician_id = :technician_id AND status = :status",
+            ['technician_id' => $technicianId, 'status' => $status]
+        )->fetch()['count'] ?? 0;
+    }
+
+    public function countByStatus(string $status): int
+    {
+        return (int)$this->db->query(
+            "SELECT COUNT(*) AS count
+             FROM {$this->table}
+             WHERE status = :status",
+            ['status' => $status]
+        )->fetch()['count'] ?? 0;
+    }
+
+    public function countByTechnician()
+    {
+        return $this->db->query(
+            "SELECT technician_id, COUNT(*) AS count
+             FROM {$this->table}
+             GROUP BY technician_id"
+        )->fetchAll();
+    }
 }

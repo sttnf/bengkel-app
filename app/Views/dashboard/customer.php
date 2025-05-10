@@ -36,7 +36,7 @@ ob_start();
                                         </div>
                                         <div class="flex flex-shrink-0 ml-2 space-x-1">
                                             <a href="/service?vehicle_id=<?= $vehicle['id'] ?>"
-                                               class="inline-flex items-center px-2 py-1 font-medium text-blue-600 bg-blue-100 rounded-lg hover:bg-blue-200 text-xs">
+                                               class="inline-flex items-center px-2 py-1 font-medium text-primary-600 bg-primary-100 rounded-lg hover:bg-primary-200 text-xs">
                                                 <i data-lucide="wrench" class="w-4 h-4 mr-1"></i>
                                             </a>
                                             <a href="edit-kendaraan.php?id=<?= $vehicle['id'] ?>"
@@ -53,7 +53,7 @@ ob_start();
                             </ul>
                             <?php if (count($vehicles) > 3): ?>
                                 <div class="mt-3">
-                                    <a href="kendaraan-saya.php" class="text-blue-600 hover:underline text-sm">Lihat
+                                    <a href="kendaraan-saya.php" class="text-primary-600 hover:underline text-sm">Lihat
                                         Semua</a>
                                 </div>
                             <?php endif; ?>
@@ -68,7 +68,7 @@ ob_start();
                                 <h2 class="text-lg font-medium text-gray-900 flex items-center space-x-2">
                                     <i data-lucide="activity" class="w-5 h-5"></i>
                                     <span>Servis Aktif</span>
-                                    <span class="inline-block py-1 px-2 rounded-full text-xs font-semibold bg-blue-100 text-blue-600 ml-2"><?= count($activeServices) ?></span>
+                                    <span class="inline-block py-1 px-2 rounded-full text-xs font-semibold bg-primary-100 text-primary-600 ml-2"><?= count($activeServices) ?></span>
                                 </h2>
                             </div>
                             <ul class="space-y-4">
@@ -144,7 +144,7 @@ ob_start();
                                                     </a>
                                                 <?php elseif (!empty($item['has_payment'])): ?>
                                                     <a href="/dashboard/customer/invoice?id=<?= $item['id'] ?>"
-                                                       class="inline-flex items-center mt-2 text-sm text-blue-600 hover:text-blue-700">
+                                                       class="inline-flex items-center mt-2 text-sm text-primary-600 hover:text-primary700">
                                                         Invoice <i data-lucide="file-text"
                                                                    class="w-4 h-4 ml-1"></i>
                                                     </a>

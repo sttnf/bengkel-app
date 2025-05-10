@@ -46,7 +46,7 @@ $layout = "main";
                     <div class="relative rounded-md shadow-sm">
                         <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">Rp</span>
                         <input type="text" id="formatted_amount"
-                               class="pl-10 pr-3 py-2 block w-full rounded-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                               class="pl-10 pr-3 py-2 block w-full rounded-md border border-gray-300 focus:ring-primary-500 focus:border-primary-500 text-gray-900"
                                value="<?= number_format((float)($service['price'] ?? 0), 0, ',', '.') ?>">
                     </div>
                 </div>
@@ -55,7 +55,7 @@ $layout = "main";
                     <label for="payment_method" class="block text-sm font-medium text-gray-700 mb-2">Metode
                         Pembayaran</label>
                     <select id="payment_method" name="payment_method" required
-                            class="block w-full bg-white border border-gray-300 px-4 py-2 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-900">
+                            class="block w-full bg-white border border-gray-300 px-4 py-2 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-gray-900">
                         <option value="cash">Tunai</option>
                         <option value="qris">QRIS</option>
                     </select>
@@ -63,11 +63,11 @@ $layout = "main";
 
                 <div class="flex justify-end items-center pt-4 gap-3">
                     <a href="/dashboard"
-                       class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
+                       class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1">
                         ← Kembali
                     </a>
                     <button type="submit"
-                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
+                            class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md shadow-sm hover:bg-primary700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1">
                         Bayar Sekarang →
                     </button>
                 </div>

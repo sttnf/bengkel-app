@@ -90,4 +90,23 @@ class Payment extends Model
 
         return $result ?: [];
     }
+
+    public function getTotalRevenue()
+    {
+        return $this->db->query(
+            "SELECT SUM(amount) AS total_revenue FROM payments"
+        )->fetchColumn();
+    }
+
+    public function getMonthlyRevenue()
+    {
+        return $this->db->query(
+            "SELECT 
+                DATE_FORMAT(created_at, '%Y-%m') AS month,
+                SUM(amount) AS total_revenue
+            FROM payments
+            GROUP BY month
+            ORDER BY month DESC"
+        )->fetchAll();
+    }
 }

@@ -48,7 +48,6 @@
                 }
             }
         }
-        lucide.createIcons();
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -56,6 +55,12 @@
         body {
             font-family: 'Inter', sans-serif;
         }
+
+        form {
+            margin: 0;
+            padding: 0;
+        }
+
         [x-cloak] {
             display: none !important;
         }

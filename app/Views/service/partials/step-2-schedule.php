@@ -14,7 +14,7 @@
                 <input type="date" id="date" name="date"
                        value="<?= $formData['date'] ?? '' ?>"
                        min="<?= date('Y-m-d') ?>"
-                       class="block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                       class="block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
                        required>
             </div>
 
@@ -28,7 +28,7 @@
                             $is_selected = $formData['time'] == $slot['time'];
                             ?>
                             <label class="time-slot px-4 py-3 border rounded-lg flex items-center justify-center cursor-pointer
-                                <?= $is_selected ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-blue-200' ?>">
+                                <?= $is_selected ? 'border-primary-600 bg-primary-50' : 'border-gray-200 hover:border-primary-200' ?>">
                                 <input type="radio" name="time"
                                        value="<?= $slot['time'] ?>" <?= $is_selected ? 'checked' : '' ?>
                                        class="sr-only">

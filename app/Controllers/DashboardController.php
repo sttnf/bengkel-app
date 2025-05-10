@@ -3,39 +3,29 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
-use App\Models\Inventory;
-use App\Models\Payment;
-use App\Models\ServiceRequest;
-use App\Models\User;
-use App\Models\Vehicle;
+use App\Models\{Inventory, Payment, Service, ServiceRequest, Technicians, User, Vehicle};
 use JetBrains\PhpStorm\NoReturn;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        if (empty($_SESSION['user_id'])) {
-            header('Location: /login');
-            exit;
-        }
+        $this->ensureLoggedIn();
+        $user = $_SESSION['user'];
+        $this->ensureRoleSet($user);
 
-        $userRole = $_SESSION['user_role'];
-        $userId = $_SESSION['user_id'];
-
-        $data = match ($userRole) {
+        $data = match ($user["role"]) {
             'admin' => $this->adminData(),
-            'technician' => $this->technicianData($userId),
-            default => $this->userData($userId),
+            'technician' => $this->technicianData($user['id']),
+            default => $this->userData($user['id']),
         };
 
-        echo "<script>console.log(" . json_encode($data) . ");</script>";
-        return $this->render("dashboard/$userRole", $data, "dashboard");
+        return $this->render("dashboard/{$user['role']}", $data, $user['role'] === 'admin' ? 'dashboard' : 'main');
     }
 
     private function adminData(): array
     {
         $serviceModel = new ServiceRequest();
-        $userModel = new User();
         $inventoryModel = new Inventory();
 
         return [
@@ -70,168 +60,283 @@ class DashboardController extends Controller
         ];
     }
 
-    public function serviceRequests()
+    public function serviceRequests(): string
     {
-        if (empty($_SESSION['user_id'])) {
-            header('Location: /login');
-            exit;
-        }
-
+        $this->ensureLoggedIn();
         $serviceModel = new ServiceRequest();
 
         $data = [
             'active_requests' => $serviceModel->getActiveRequests(),
             'available_technicians' => $serviceModel->getAvailableTechnicians(),
-            'history_requests' => $serviceModel->getHistoryRequests()
+            'history_requests' => $serviceModel->getHistoryRequests(),
         ];
-
-        echo "<script>console.log(" . json_encode($data) . ");</script>";
 
         return $this->render('dashboard/admin/service-requests', $data, 'dashboard');
     }
 
     #[NoReturn] public function updateServiceRequest(): void
     {
-        if (empty($_SESSION['user_id'])) {
-            header('Location: /login');
-            exit;
-        }
-
-
-        $assignTechnician = !empty($_POST['assign_mechanic_id']) ? (int)$_POST['assign_mechanic_id'] : null;
-        $status = $_POST['status'] ?? null;
-        $requestId = $_POST['id'] ?? null;
-
+        $this->ensureLoggedIn();
         $serviceModel = new ServiceRequest();
+        $requestId = $_POST['id'] ?? null;
 
         if ($requestId) {
             $updates = array_filter([
-                'status' => $status,
-                'technician_id' => $assignTechnician,
-                'completion_datetime' => $status === 'completed' ? date('Y-m-d H:i:s') : null,
-            ], function ($value) {
-                return $value !== null && $value !== '';
-            });
+                'status' => $_POST['status'] ?? null,
+                'technician_id' => $_POST['assign_mechanic_id'] ?? null,
+                'completion_datetime' => ($_POST['status'] ?? '') === 'completed' ? date('Y-m-d H:i:s') : null,
+            ]);
 
-            if (!empty($updates)) {
+            if ($updates) {
                 $serviceModel->update($requestId, $updates);
+                $this->toast(['success' => ['title' => 'Berhasil', 'message' => 'Data berhasil disimpan.']]);
             }
         }
 
         $this->redirect('/dashboard/service-requests');
     }
 
-    public function customers()
+    public function customers(): string
     {
-        if (empty($_SESSION['user_id'])) {
-            header('Location: /login');
-            exit;
-        }
-
+        $this->ensureLoggedIn();
         $userModel = new User();
-        $data = [
-            'customers' => $userModel->getActiveUsers('customer'),
-        ];
 
-        echo "<script>console.log(" . json_encode($data) . ");</script>";
-
-        return $this->render('dashboard/admin/customers', $data, 'dashboard');
+        return $this->render('dashboard/admin/customers', [
+            'customers' => $userModel->getActiveUsers('customer')
+        ], 'dashboard');
     }
 
-    public function inventory()
+    public function inventory(): string
     {
-        if (empty($_SESSION['user_id'])) {
-            header('Location: /login');
-            exit;
-        }
+        $this->ensureLoggedIn();
         $inventoryModel = new Inventory();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Handle delete request
-            if (isset($_POST['action']) && $_POST['action'] === 'delete') {
-                if (!empty($_POST['id'])) {
-                    $inventoryModel->delete((int)$_POST['id']);
-                    $this->redirect('/dashboard/inventory');
-                    return;
-                }
-            }
+            $this->handleInventoryPost($inventoryModel);
+        }
 
-            // Handle create/update request
-            $data = [
-                'part_number' => $_POST['part_number'],
-                'name' => $_POST['name'],
-                'category' => $_POST['category'],
-                'supplier' => $_POST['supplier'],
-                'unit' => $_POST['unit'],
-                'current_stock' => $_POST['current_stock'],
-                'reorder_level' => $_POST['reorder_level'],
-                'unit_price' => $_POST['unit_price'],
+        $page = (int)($_GET['page'] ?? 1);
+        $limit = (int)($_GET['limit'] ?? 10);
+        $offset = ($page - 1) * $limit;
+
+        $criteria = array_filter([
+            'name' => isset($_GET['search']) ? ['like' => "%" . $_GET['search'] . "%"] : null,
+            'category' => $_GET['category'] ?? null,
+        ]);
+
+        if (isset($_GET['status'])) {
+            $criteria['current_stock'] = match ($_GET['status']) {
+                'available' => ['operator' => '>', 'value' => 'reorder_level'],
+                'low_stock' => ['operator' => '<=', 'value' => 'reorder_level', 'and' => ['operator' => '>', 'value' => 0]],
+                'out_of_stock' => ['operator' => '<=', 'value' => 0],
+            };
+            unset($criteria['status']);
+        }
+
+        return $this->render('dashboard/admin/inventory', [
+            'inventory_items' => $inventoryModel->findAllPagination($limit, $offset, $criteria),
+            'pagination' => [
+                'total' => $inventoryModel->count(),
+                'page_count' => ceil($inventoryModel->count() / $limit),
+                'page' => $page,
+                'limit' => $limit,
+            ],
+        ], 'dashboard');
+    }
+
+    #[NoReturn] private function handleInventoryPost(Inventory $inventoryModel): void
+    {
+        $action = $_POST['action'] ?? null;
+        $id = $_POST['id'] ?? null;
+
+        if ($action === 'delete' && $id) {
+            $inventoryModel->delete((int)$id);
+        } else {
+            $data = array_filter([
+                'part_number' => $_POST['part_number'] ?? null,
+                'name' => $_POST['name'] ?? null,
+                'category' => $_POST['category'] ?? null,
+                'supplier' => $_POST['supplier'] ?? null,
+                'unit' => $_POST['unit'] ?? null,
+                'current_stock' => $_POST['current_stock'] ?? null,
+                'reorder_level' => $_POST['reorder_level'] ?? null,
+                'unit_price' => $_POST['unit_price'] ?? null,
                 'location' => $_POST['location'] ?? null,
-            ];
+            ]);
 
-            if (!empty($_POST['id'])) {
-                // Update existing inventory item
-                $inventoryModel->update((int)$_POST['id'], $data);
-            } else {
-                // Create new inventory item
-                $inventoryModel->create($data);
-            }
-
-            $this->redirect('/dashboard/inventory');
+            $id ? $inventoryModel->update((int)$id, $data) : $inventoryModel->create($data);
+            $this->toast(['success' => ['title' => 'Berhasil', 'message' => 'Data berhasil disimpan.']]);
         }
 
-        $data = [
-            'low_stock_items' => $inventoryModel->getLowerStockItems(),
-            'inventory_items' => $inventoryModel->findAll()
-        ];
-
-        return $this->render('dashboard/admin/inventory', $data, 'dashboard');
+        $this->redirect('/dashboard/inventory');
     }
 
-
-    public function technicians()
+    public function technicians(): string
     {
-        if (empty($_SESSION['user_id'])) {
-            header('Location: /login');
-            exit;
-        }
+        $this->ensureLoggedIn();
+        $page = (int)($_GET['page'] ?? 1);
+        $limit = (int)($_GET['limit'] ?? 10);
+        $offset = ($page - 1) * $limit;
 
-        $userModel = new User();
-        $data = [
-            'technicians' => $userModel->getActiveUsers('technician'),
-        ];
-
-        return $this->render('dashboard/admin/technicians', $data, 'dashboard');
-    }
-
-    public function services()
-    {
-        if (empty($_SESSION['user_id'])) {
-            header('Location: /login');
-            exit;
-        }
+        $techniciansModel = new Technicians();
+        $technicians = $techniciansModel->findAllPagination($limit, $offset, [], [
+            ['type' => 'INNER', 'table' => 'users', 'on' => 'technicians.user_id = users.id'],
+        ]);
 
         $serviceModel = new ServiceRequest();
-        $data = [
-            'services' => $serviceModel->findAll()
-        ];
+        foreach ($technicians as &$tech) {
+            $tech['active_requests'] = $serviceModel->countByTechnicianAndStatus($tech['id'], 'in_progress');
+            $tech['status'] = $tech['active_requests'] > 0 ? 'on_duty' : 'available';
+        }
 
-        return $this->render('dashboard/admin/services', $data, 'dashboard');
+        return $this->render('dashboard/admin/technicians', [
+            'technicians' => $technicians,
+            'pagination' => [
+                'total' => $techniciansModel->count(),
+                'page_count' => ceil($techniciansModel->count() / $limit),
+                'page' => $page,
+                'limit' => $limit,
+            ],
+        ], 'dashboard');
+    }
+
+    public function services(): string
+    {
+        $this->ensureLoggedIn();
+        $serviceModel = new Service();
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->handleServicePost($serviceModel);
+        }
+
+        $page = (int)($_GET['page'] ?? 1);
+        $limit = (int)($_GET['limit'] ?? 10);
+        $offset = ($page - 1) * $limit;
+
+        $criteria = array_filter([
+            'name' => isset($_GET['search']) ? ['like' => "%{$_GET['search']}%"] : null,
+            'category' => $_GET['category'] ?? null,
+            'estimated_hours' => $this->parseEstTime($_GET['est_time'] ?? null),
+        ]);
+
+        return $this->render('dashboard/admin/services', [
+            'services' => $serviceModel->findAllPagination($limit, $offset, $criteria),
+            'pagination' => [
+                'total' => $serviceModel->count(),
+                'page_count' => ceil($serviceModel->count() / $limit),
+                'page' => $page,
+                'limit' => $limit,
+            ],
+        ], 'dashboard');
+    }
+
+    #[NoReturn] private function handleServicePost(Service $serviceModel): void
+    {
+        $action = $_POST['action'] ?? null;
+        $id = $_POST['id'] ?? null;
+
+        if ($action === 'delete' && $id) {
+            $serviceModel->delete((int)$id);
+        } else {
+            $data = array_filter([
+                'name' => $_POST['name'] ?? null,
+                'description' => $_POST['description'] ?? null,
+                'base_price' => $_POST['base_price'] ?? null,
+                'estimated_hours' => $_POST['estimated_hours'] ?? null,
+                'category' => $_POST['category'] ?? null,
+            ]);
+
+            $id ? $serviceModel->update((int)$id, $data) : $serviceModel->create($data);
+            $this->toast(['success' => ['title' => 'Berhasil', 'message' => 'Data berhasil disimpan.']]);
+        }
+
+        $this->redirect('/dashboard/services');
+    }
+
+    private function parseEstTime(?string $estTime): ?array
+    {
+        if (!$estTime) return null;
+
+        if (str_contains($estTime, '-')) {
+            [$min, $max] = explode('-', $estTime);
+            return ['between' => [trim($min), trim($max)]];
+        }
+
+        return match ($estTime[0]) {
+            '>' => ['operator' => '>', 'value' => substr($estTime, 1)],
+            '<' => ['operator' => '<', 'value' => substr($estTime, 1)],
+            default => null,
+        };
     }
 
     public function analytics()
     {
-        if (empty($_SESSION['user_id'])) {
-            header('Location: /login');
-            exit;
-        }
+        $this->ensureLoggedIn();
 
-        $serviceModel = new ServiceRequest();
-        $data = [
-            'analytics' => []
-        ];
+        $analytics = $this->getAnalyticsData();
 
-        return $this->render('dashboard/admin/analytics', $data, 'dashboard');
+        return $this->render('dashboard/admin/analytics', [
+            'analytics' => $analytics
+        ], 'dashboard');
     }
 
+    private function getAnalyticsData(): array
+    {
+        $serviceModel = new ServiceRequest();
+        $paymentModel = new Payment();
+        $technicianModel = new Technicians();
+        $inventoryModel = new Inventory();
+
+        return [
+            'services' => [
+                'total' => $serviceModel->count(),
+                'completed' => $serviceModel->countByStatus('completed'),
+                'pending' => $serviceModel->countByStatus('pending'),
+                'in_progress' => $serviceModel->countByStatus('in_progress')
+            ],
+            'revenue' => [
+                'total' => $paymentModel->getTotalRevenue(),
+                'monthly' => $paymentModel->getMonthlyRevenue()
+            ],
+            'technicians' => $this->getTechnicianStats($technicianModel, $serviceModel),
+            'inventory' => [
+                'low_stock' => $inventoryModel->countLowStock(),
+                'out_of_stock' => $inventoryModel->countOutOfStock()
+            ]
+        ];
+    }
+
+    private function getTechnicianStats(Technicians $technicianModel, ServiceRequest $serviceModel): array
+    {
+        $technicians = $technicianModel->findAll();
+        $stats = [];
+
+        foreach ($technicians as $tech) {
+            // Access user_id instead of id, based on table structure
+            $techId = $tech['user_id'];
+            $stats[] = [
+                'id' => $techId,
+                'name' => $tech['name'] ?? 'Technician #' . $techId,
+                'assigned' => $serviceModel->countByTechnician($techId),
+                'completed' => $serviceModel->countByTechnicianAndStatus($techId, 'completed'),
+                'in_progress' => $serviceModel->countByTechnicianAndStatus($techId, 'in_progress')
+            ];
+        }
+
+        return $stats;
+    }
+
+    private function ensureLoggedIn(): void
+    {
+        if (empty($_SESSION['user'])) {
+            $this->redirect('/login');
+        }
+    }
+
+    private function ensureRoleSet(array $user): void
+    {
+        if (empty($user['role'])) {
+            $this->redirect('/login');
+        }
+    }
 }

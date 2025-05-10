@@ -17,6 +17,21 @@ abstract class Model
         return $this->db->fetchAll("SELECT * FROM {$this->table}");
     }
 
+    public function findAllPagination($limit = 10, $offset = 0, $criteria = [], array $joins = []): array
+    {
+        $query = $this->buildQueryWithJoins("SELECT * FROM {$this->table}", $joins);
+        [$whereClause, $params] = $this->buildWhereClause($criteria);
+
+        if ($whereClause) {
+            $query .= " WHERE {$whereClause}";
+        }
+        $query .= " LIMIT ? OFFSET ?";
+        $params[] = $limit;
+        $params[] = $offset;
+
+        return $this->db->fetchAll($query, $params);
+    }
+
     public function findById($id)
     {
         return $this->db->fetch("SELECT * FROM {$this->table} WHERE id = ?", [$id]);
@@ -56,7 +71,12 @@ abstract class Model
     {
         $query = "SELECT COUNT(*) as count FROM {$this->table}";
         list($whereClause, $params) = $this->buildWhereClause($criteria);
-        return (int)($this->db->fetch("{$query} WHERE {$whereClause}", $params)['count'] ?? 0);
+
+        if ($whereClause) {
+            $query .= " WHERE {$whereClause}";
+        }
+
+        return (int)($this->db->fetch($query, $params)['count'] ?? 0);
     }
 
     public function exists(array $criteria)

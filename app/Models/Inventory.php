@@ -17,4 +17,18 @@ class Inventory extends Model
             5
         );
     }
+
+    public function countLowStock()
+    {
+        return $this->db->query(
+            "SELECT COUNT(*) as total FROM inventory_items WHERE current_stock <= reorder_level"
+        )->fetchColumn();
+    }
+
+    public function countOutOfStock()
+    {
+        return $this->db->query(
+            "SELECT COUNT(*) as total FROM inventory_items WHERE current_stock = 0"
+        )->fetchColumn();
+    }
 }

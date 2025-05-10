@@ -1,5 +1,8 @@
 <?php
 
+require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/app/Core/Database.php';
+
 use App\Core\Database;
 use Dotenv\Dotenv;
 use Dotenv\Exception\InvalidPathException;
@@ -7,8 +10,6 @@ use Symfony\Component\Process\Process;
 
 // Use Symfony Process for server management
 
-// Require Composer's autoloader
-require_once __DIR__ . '/vendor/autoload.php';
 
 /**
  * PHP MVC Framework Server Manager

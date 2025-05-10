@@ -82,13 +82,15 @@ class DashboardController extends Controller
         $data = [
             'active_requests' => $serviceModel->getActiveRequests(),
             'available_technicians' => $serviceModel->getAvailableTechnicians(),
-//            'history_requests' => $serviceModel->getHistoryRequests()
+            'history_requests' => $serviceModel->getHistoryRequests()
         ];
+
+        echo "<script>console.log(" . json_encode($data) . ");</script>";
 
         return $this->render('dashboard/admin/service-requests', $data, 'dashboard');
     }
 
-    #[NoReturn] public function updateServiceRequest()
+    #[NoReturn] public function updateServiceRequest(): void
     {
         if (empty($_SESSION['user_id'])) {
             header('Location: /login');
@@ -131,6 +133,8 @@ class DashboardController extends Controller
             'customers' => $userModel->getActiveUsers('customer'),
         ];
 
+        echo "<script>console.log(" . json_encode($data) . ");</script>";
+
         return $this->render('dashboard/admin/customers', $data, 'dashboard');
     }
 
@@ -140,14 +144,50 @@ class DashboardController extends Controller
             header('Location: /login');
             exit;
         }
-
         $inventoryModel = new Inventory();
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Handle delete request
+            if (isset($_POST['action']) && $_POST['action'] === 'delete') {
+                if (!empty($_POST['id'])) {
+                    $inventoryModel->delete((int)$_POST['id']);
+                    $this->redirect('/dashboard/inventory');
+                    return;
+                }
+            }
+
+            // Handle create/update request
+            $data = [
+                'part_number' => $_POST['part_number'],
+                'name' => $_POST['name'],
+                'category' => $_POST['category'],
+                'supplier' => $_POST['supplier'],
+                'unit' => $_POST['unit'],
+                'current_stock' => $_POST['current_stock'],
+                'reorder_level' => $_POST['reorder_level'],
+                'unit_price' => $_POST['unit_price'],
+                'location' => $_POST['location'] ?? null,
+            ];
+
+            if (!empty($_POST['id'])) {
+                // Update existing inventory item
+                $inventoryModel->update((int)$_POST['id'], $data);
+            } else {
+                // Create new inventory item
+                $inventoryModel->create($data);
+            }
+
+            $this->redirect('/dashboard/inventory');
+        }
+
         $data = [
-            'low_stock_items' => $inventoryModel->getLowStockItems(),
+            'low_stock_items' => $inventoryModel->getLowerStockItems(),
+            'inventory_items' => $inventoryModel->findAll()
         ];
 
         return $this->render('dashboard/admin/inventory', $data, 'dashboard');
     }
+
 
     public function technicians()
     {
@@ -173,7 +213,7 @@ class DashboardController extends Controller
 
         $serviceModel = new ServiceRequest();
         $data = [
-            'services' => $serviceModel->getAllServices(),
+            'services' => $serviceModel->findAll()
         ];
 
         return $this->render('dashboard/admin/services', $data, 'dashboard');
@@ -188,7 +228,7 @@ class DashboardController extends Controller
 
         $serviceModel = new ServiceRequest();
         $data = [
-            'analytics' => $serviceModel->getAnalytics(),
+            'analytics' => []
         ];
 
         return $this->render('dashboard/admin/analytics', $data, 'dashboard');

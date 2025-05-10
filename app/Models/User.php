@@ -64,13 +64,4 @@ class User extends Model
 
         return $this->db->query($query, $params)->fetchAll();
     }
-
-    public function updatePassword(int $userId, string $newPassword)
-    {
-        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-        return $this->db->query("UPDATE users SET password = :password WHERE id = :id", [
-            'password' => $hashedPassword,
-            'id' => $userId
-        ]);
-    }
 }

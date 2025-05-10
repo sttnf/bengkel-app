@@ -33,8 +33,20 @@ function formatIDR($amount)
 ob_start();
 ?>
 
+<header>
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 ">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight text-gray-900"><?= $pageHeader ?></h1>
+            <p class="mt-2 text-sm text-gray-600">
+                Kelola semua data analitik bengkel Anda dengan mudah. Lihat semua statistik, pendapatan, dan aktivitas
+                terbaru.
+            </p>
+        </div>
+    </div>
+</header>
+
 <!-- Summary Cards -->
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 ">
     <?php foreach ($summaryStats as $stat): ?>
         <div class="bg-white border rounded-xl shadow-sm p-4 text-center">
             <h3 class="text-sm text-gray-500 font-medium"><?= $stat['label'] ?></h3>
@@ -44,7 +56,7 @@ ob_start();
 </div>
 
 <!-- Revenue Section -->
-<div class="bg-white rounded-xl shadow-sm border p-4 mb-6">
+<div class="bg-white rounded-xl shadow-sm border p-4 ">
     <h2 class="text-lg font-semibold text-gray-700 mb-4">Revenue Summary</h2>
     <div class="grid md:grid-cols-3 gap-4">
         <div class="bg-gray-50 p-4 rounded-lg">
@@ -63,7 +75,7 @@ ob_start();
 </div>
 
 <!-- Placeholder for Chart -->
-<div class="bg-white rounded-xl shadow-sm border p-4 mb-6">
+<div class="bg-white rounded-xl shadow-sm border p-4 ">
     <h2 class="text-lg font-semibold text-gray-700 mb-4">Monthly Trend</h2>
     <div class="h-48 flex items-center justify-center bg-gray-100 rounded text-gray-400 text-sm">
         Chart Placeholder (e.g., Chart.js or image)

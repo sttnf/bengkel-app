@@ -43,7 +43,7 @@ class AuthController extends Controller
         }
 
         try {
-            new User()->register($name, $email, $password);
+            (new User())->register($name, $email, $password);
             $_SESSION['registration_success'] = 'Pendaftaran berhasil! Silakan masuk ke akun Anda.';
             $this->redirect('/login');
         } catch (\Exception $e) {
@@ -72,7 +72,7 @@ class AuthController extends Controller
             return;
         }
 
-        $user = new User()->validateLogin($email, $password);
+        $user = (new User())->validateLogin($email, $password);
 
         if ($user) {
             $_SESSION = [

@@ -51,10 +51,15 @@ $router->group('/users', function ($router) {
 // Dashboard routes
 $router->group('/dashboard', function ($router) {
     $router->get('/', [DashboardController::class, 'index']);
+
     $router->get('/service-requests', [DashboardController::class, 'serviceRequests']);
     $router->post('/service-requests', [DashboardController::class, 'updateServiceRequest']);
+
     $router->get('/customers', [DashboardController::class, 'customers']);
+
     $router->get('/inventory', [DashboardController::class, 'inventory']);
+    $router->post('/inventory', [DashboardController::class, 'inventory']);
+
     $router->get('/technicians', [DashboardController::class, 'technicians']);
     $router->get('/services', [DashboardController::class, 'services']);
     $router->get('/analytics', [DashboardController::class, 'analytics']);

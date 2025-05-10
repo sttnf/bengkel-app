@@ -11,13 +11,21 @@ $services = [
 ob_start();
 ?>
 
-<div class="flex justify-between items-center mb-4">
-    <h2 class="text-lg font-semibold text-gray-700">Daftar Layanan</h2>
-    <a href="add-service.php"
-       class="inline-flex items-center px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-        <i data-lucide="plus" class="w-4 h-4 mr-2"></i> Tambah Layanan
-    </a>
-</div>
+<header >
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 ">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight text-gray-900"><?= $pageHeader ?></h1>
+            <p class="mt-2 text-sm text-gray-600">
+                Kelola layanan bengkel Anda dengan mudah. Lihat semua layanan yang tersedia, deskripsi, dan harga.
+            </p>
+        </div>
+
+        <a href="add-inventory.php"
+           class="inline-flex items-center px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+            <i data-lucide="plus-circle" class="w-4 h-4 mr-2"></i> Tambah Item
+        </a>
+    </div>
+</header>
 
 <div class="overflow-x-auto bg-white rounded-xl shadow-sm border">
     <table class="min-w-full divide-y divide-gray-200">

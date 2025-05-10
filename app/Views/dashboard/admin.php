@@ -39,9 +39,13 @@ ob_start();
 ?>
 
 
-<header class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-    <h1 class="text-2xl font-semibold text-gray-900 tracking-tight"><?= $pageHeader ?></h1>
-    <p class="text-gray-500">Selamat datang kembali, <?= $_SESSION['user_name'] ?? 'User' ?> 👋</p>
+<header >
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 ">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight text-gray-900"><?= $pageHeader ?></h1>
+            <p class="text-gray-500">Selamat datang kembali, <?= $_SESSION['user_name'] ?? 'User' ?> 👋</p>
+        </div>
+    </div>
 </header>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">

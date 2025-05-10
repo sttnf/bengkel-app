@@ -72,7 +72,7 @@ function isActive(string $link, string $current): bool
 
         <main class="flex-1 space-y-6 overflow-y-auto bg-gray-100 py-8 px-4 sm:px-6 lg:px-8 font-sans antialiased text-gray-900">
             <?php if (isset($pageHeader)): ?>
-                <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center justify-between ">
                     <h1 class="text-2xl font-semibold text-gray-900"><?= $pageHeader ?></h1>
                     <?= $headerButton ?? '' ?>
                 </div>

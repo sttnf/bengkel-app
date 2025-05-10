@@ -198,6 +198,23 @@ class ServiceRequest extends Model
         )->fetchAll();
     }
 
+    public function getHistoryRequests(int $limit = 5): array
+    {
+        return $this->db->query(
+            "SELECT sr.*, s.name AS service_name, u.name AS user_name, 
+                            v.brand AS vehicle_brand, v.model AS vehicle_model, 
+                            cv.year AS vehicle_year, cv.license_plate
+                     FROM {$this->table} sr
+                     JOIN services s ON sr.service_id = s.id
+                     JOIN users u ON sr.user_id = u.id
+                     JOIN customer_vehicles cv ON sr.vehicle_id = cv.id
+                     JOIN vehicles v ON cv.vehicle_id = v.id
+                     WHERE sr.status IN ('completed', 'cancelled')
+                     ORDER BY sr.scheduled_datetime DESC LIMIT :limit",
+            ['limit' => $limit]
+        )->fetchAll();
+    }
+
     public function getAssignedToTechnician(int $technicianId, int $limit = 5): array
     {
         return $this->db->query(
@@ -220,10 +237,12 @@ class ServiceRequest extends Model
         return $this->db->query(
             "SELECT sr.*, s.name AS service_name, u.name AS user_name, 
                 v.brand AS vehicle_brand, v.model AS vehicle_model, 
-                cv.year AS vehicle_year, cv.license_plate
+                cv.year AS vehicle_year, cv.license_plate,
+                t.name AS technician_name
          FROM {$this->table} sr
          JOIN services s ON sr.service_id = s.id
          JOIN users u ON sr.user_id = u.id
+         LEFT JOIN users t ON sr.technician_id = t.id
          JOIN customer_vehicles cv ON sr.vehicle_id = cv.id
          JOIN vehicles v ON cv.vehicle_id = v.id
          WHERE sr.status NOT IN ('completed', 'cancelled')
